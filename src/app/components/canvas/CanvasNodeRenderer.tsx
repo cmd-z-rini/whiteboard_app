@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Plus, X, Target, FileText, Users, AlertTriangle, Zap, ArrowRight, Calendar, Grid3X3, Check, Lightbulb, GripHorizontal, Copy } from "lucide-react";
+import { Plus, X, Target, FileText, Users, AlertTriangle, Zap, ArrowRight, Calendar, Grid3X3, Check, Lightbulb, GripHorizontal, GripVertical, Copy } from "lucide-react";
 import { CanvasNode, COMPONENT_DEFAULTS } from "./types";
 import { TimelineCardNode } from "./TimelineCard";
 
@@ -33,15 +33,14 @@ function ClarifyingQuestionsNode({ node, onUpdate }: NodeProps) {
             <InlineEdit value={q.text} onChange={(v) => updateQ(q.id, v)} className={`flex-1 text-base ${q.answered ? "text-muted-foreground line-through" : "text-foreground"}`} placeholder="Ask a question..." multiline />
           </div>
         ))}
-        <button onClick={addQ} className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium text-sm mt-2">
-          <Plus className="w-4 h-4" /> Add Question
+        <button onClick={addQ} className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium text-base mt-2">
+          <Plus className="w-5 h-5" /> Add Question
         </button>
       </div>
     </div>
   );
 }
 
-// ─── Prioritization Matrix ───────────────────────────────────────
 // ─── Prioritization Matrix ───────────────────────────────────────
 function PrioritizationMatrixNode({ node }: NodeProps) {
   return (
@@ -55,9 +54,9 @@ function PrioritizationMatrixNode({ node }: NodeProps) {
           <span className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">High Impact</span>
           <span className="text-[10px] font-medium text-blue-600/60 uppercase tracking-wider">High Effort</span>
         </div>
-        <div className="bg-yellow-50/50 border-r border-yellow-200 p-4 relative flex flex-col">
-          <span className="text-xs font-bold text-yellow-700 uppercase tracking-wider mb-1">Low Impact</span>
-          <span className="text-[10px] font-medium text-yellow-600/60 uppercase tracking-wider">Low Effort</span>
+        <div className="bg-yellow-50/50 border-r border-yellow-200 p-6 relative flex flex-col">
+          <span className="text-sm font-bold text-yellow-700 uppercase tracking-wider mb-1">Low Impact</span>
+          <span className="text-xs font-medium text-yellow-600/60 uppercase tracking-wider">Low Effort</span>
         </div>
         <div className="bg-red-50/50 p-4 relative flex flex-col">
           <span className="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">Low Impact</span>
@@ -70,32 +69,50 @@ function PrioritizationMatrixNode({ node }: NodeProps) {
 }
 
 // ─── Shape Node ──────────────────────────────────────────────────
-function ShapeNode({ node }: NodeProps) {
+function ShapeNode({ node, isSelected, onStartConnection }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const d = node.data;
   const shapeClasses = {
     rectangle: "rounded-lg",
     circle: "rounded-full",
     diamond: "rotate-45 scale-75 rounded-sm",
   };
-  // Default to rectangle if undefined
   const shapeClass = shapeClasses[(d.shapeType as "rectangle" | "circle" | "diamond") || "rectangle"];
 
   return (
-    <div className={`w-full h-full ${shapeClass} ${d.color || "bg-blue-500"} shadow-sm border border-black/10 flex items-center justify-center`}>
-      {/* Optional: Add text inside shape if needed later */}
+    <div
+      className={`w-full h-full ${shapeClass} ${d.color || "bg-blue-500"} shadow-sm border border-black/10 flex items-center justify-center relative`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Connection Handles */}
+      {(isSelected || isHovered) && (
+        <ConnectionHandles onStart={() => onStartConnection?.()} />
+      )}
     </div>
   );
 }
 
 // ─── Flow Step (Simple) ──────────────────────────────────────────
-export function FlowStepNode({ node, onUpdate }: NodeProps) {
+export function FlowStepNode({ node, onUpdate, onStartDrag, isSelected, onStartConnection }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const d = node.data;
   return (
-    <div className="p-3 bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow flex items-center gap-3">
+    <div
+      className="p-3 bg-white border-2 border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow flex items-center gap-3 cursor-grab active:cursor-grabbing relative"
+      onMouseDown={onStartDrag}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg shrink-0">
         {d.type === "action" ? "⚡" : "🛑"}
       </div>
       <InlineEdit value={d.label} onChange={(v) => onUpdate({ ...d, label: v })} className="text-base font-medium" />
+
+      {/* Connection Handles */}
+      {(isSelected || isHovered) && (
+        <ConnectionHandles onStart={() => onStartConnection?.()} />
+      )}
     </div>
   );
 }
@@ -146,10 +163,10 @@ function KeyInsightsNode({ node, onUpdate }: NodeProps) {
   };
 
   return (
-    <div className="p-4">
-      <div className="flex items-center gap-2 mb-4 text-slate-800">
-        <Lightbulb className="w-5 h-5 text-yellow-500" />
-        <span className="font-bold text-lg">Key Research Insights</span>
+    <div className="p-6">
+      <div className="flex items-center gap-3 mb-6 text-slate-800">
+        <Lightbulb className="w-6 h-6 text-yellow-500" />
+        <span className="font-bold text-xl">Key Research Insights</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {insights.map((i: any) => (
@@ -211,13 +228,40 @@ function Crazy8sNode({ node, onUpdate }: NodeProps) {
   );
 }
 
-// ─── Mobile Frame (Updated) ──────────────────────────────────────
-function MobileFrameNode({ node }: NodeProps) {
+// ─── Mobile Frame (Updated with SVG) ───────────────────────────
+function MobileFrameNode({ node, onStartDrag, isSelected, onStartConnection }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   return (
-    <div className="w-full h-full rounded-[48px] border-[12px] border-slate-800 bg-transparent overflow-visible shadow-2xl relative pointer-events-none">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-slate-800 rounded-b-2xl z-20"></div>
-      {/* Content behaves as a transparent frame overlay */}
-      <div className="w-full h-full pointer-events-none"></div>
+    <div
+      className="w-full h-full relative group cursor-grab active:cursor-grabbing"
+      onMouseDown={onStartDrag}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 375 812"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+        className="drop-shadow-xl"
+      >
+        <rect x="1" y="1" width="373" height="810" rx="49" fill="#ECF0F3" />
+        <rect x="8" y="8" width="359" height="796" rx="42" fill="white" />
+        <rect x="1" y="1" width="373" height="810" rx="49" stroke="black" strokeWidth="2" />
+        {/* Notch */}
+        <path d="M121 1H254V12C254 23.0457 245.046 32 234 32H141C129.954 32 121 23.0457 121 12V1Z" fill="black" />
+      </svg>
+
+      <div className="absolute inset-0 pt-10 px-6 pb-6 overflow-auto pointer-events-none">
+        {/* Content Area for dropping elements */}
+      </div>
+
+      {/* Connection Handles */}
+      {(isSelected || isHovered) && (
+        <ConnectionHandles onStart={() => onStartConnection?.()} />
+      )}
     </div>
   );
 }
@@ -232,54 +276,85 @@ export interface NodeProps {
   onDelete?: () => void;
   onDuplicate?: () => void;
   onResizeStart?: (e: React.MouseEvent, handle: "tl" | "tr" | "bl" | "br") => void;
+  onStartConnection?: () => void;
+  onFinishConnection?: () => void;
+  children?: React.ReactNode;
 }
 
-// ─── Standard Card Wrapper ───────────────────────────────────────
-function StandardCardWrapper({ children, node, isSelected, onStartDrag, onDelete, onDuplicate }: { children: React.ReactNode } & NodeProps) {
-  const defaults = COMPONENT_DEFAULTS[node.type] || { label: "Component", emoji: "🧩" };
+function ConnectionHandles({ onStart }: {
+  onStart: () => void;
+}) {
   return (
-    <div className={`bg-white rounded-xl shadow-sm border-2 transition-shadow hover:shadow-md h-full flex flex-col ${isSelected ? "border-blue-500 shadow-blue-100" : "border-transparent hover:border-border"}`}>
-      {/* Drag handle */}
+    <>
       <div
-        className="flex items-center justify-between px-3 py-1.5 cursor-grab active:cursor-grabbing border-b border-border/50 rounded-t-xl bg-secondary/20"
-        onMouseDown={(e) => onStartDrag?.(e)}
-      >
-        <div className="flex items-center gap-1.5">
-          <GripHorizontal className="w-3.5 h-3.5 text-muted-foreground/40" />
-          <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">
-            {defaults.label}
-          </span>
+        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-crosshair z-[100] border-2 border-white shadow-sm hover:scale-125 transition-transform"
+        onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onStart(); }}
+      />
+      <div
+        className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-crosshair z-[100] border-2 border-white shadow-sm hover:scale-125 transition-transform"
+        onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onStart(); }}
+      />
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-crosshair z-[100] border-2 border-white shadow-sm hover:scale-125 transition-transform"
+        onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onStart(); }}
+      />
+      <div
+        className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full cursor-crosshair z-[100] border-2 border-white shadow-sm hover:scale-125 transition-transform"
+        onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onStart(); }}
+      />
+    </>
+  );
+}
+
+const BYPASS_WRAPPER_TYPES = ["sticky-note", "mobile-frame", "wireframe-sketch", "flow-step"];
+
+// ─── Standard Card Wrapper ───────────────────────────────────────
+function StandardCardWrapper({ node, children, onUpdate, isSelected, onStartDrag, onDelete, onDuplicate, onResizeStart, onStartConnection }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const d = node.data;
+  const isBypassed = BYPASS_WRAPPER_TYPES.includes(node.type);
+
+  // If bypassed, we don't render the card wrapper UI, just the children.
+  // Actually, if it's bypassed, this function shouldn't even be called, but we have it as a fallback.
+  if (isBypassed) return <>{children}</>;
+
+  return (
+    <div
+      className={`group relative h-full bg-white border-2 transition-all duration-200 ${isSelected ? "border-primary shadow-lg ring-1 ring-primary/20" : "border-border/50 hover:border-primary/30 shadow-sm"}`}
+      style={{ borderRadius: "12px", background: d.color || "white" }}
+      onMouseDown={onStartDrag}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Header / Draggable Area */}
+      <div className="h-6 flex items-center justify-between px-2 border-b border-border/50 bg-secondary/30 rounded-t-[10px] cursor-grab active:cursor-grabbing group">
+        <div className="flex items-center gap-1.5 overflow-hidden">
+          <GripVertical className="w-3 h-3 text-muted-foreground/40 shrink-0" />
+          <span className="text-[10px] font-medium text-muted-foreground/60 truncate uppercase tracking-wider">{node.type.replace("-", " ")}</span>
         </div>
-        <div className="flex items-center gap-0.5 opacity-0 group-hover/node:opacity-100 transition-opacity">
-          <button
-            onClick={(e) => { e.stopPropagation(); onDuplicate?.(); }}
-            className="p-1 rounded hover:bg-secondary text-muted-foreground/40 hover:text-foreground transition-colors"
-            title="Duplicate"
-          >
-            <Copy className="w-3 h-3" />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-            className="p-1 rounded hover:bg-red-50 text-muted-foreground/40 hover:text-red-500 transition-colors"
-            title="Delete"
-          >
-            <X className="w-3 h-3" />
-          </button>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={(e) => { e.stopPropagation(); onDuplicate?.(); }} className="p-0.5 hover:bg-secondary rounded text-muted-foreground/60 hover:text-foreground"><Copy className="w-3 h-3" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onDelete?.(); }} className="p-0.5 hover:bg-red-50 rounded text-muted-foreground/60 hover:text-red-500"><X className="w-3 h-3" /></button>
         </div>
       </div>
 
-      {/* Content */}
+      <SelectionOverlay isSelected={!!isSelected} onResizeStart={onResizeStart} width={node.width} height={node.data.height} />
+
       <div className="p-3 h-full overflow-hidden">
         {children}
       </div>
+
+      {/* Connection Handles */}
+      {(isSelected || isHovered) && (
+        <ConnectionHandles onStart={() => onStartConnection?.()} />
+      )}
     </div>
   );
 }
 
 // ─── Simple Text Node ──────────────────────────────────────────────
-
-// ─── Simple Text Node ──────────────────────────────────────────────
-function SimpleTextNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart }: NodeProps) {
+function SimpleTextNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart, onStartConnection }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const d = node.data;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -289,13 +364,6 @@ function SimpleTextNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart
       textareaRef.current.style.height = "auto";
       const newHeight = textareaRef.current.scrollHeight;
       textareaRef.current.style.height = newHeight + "px";
-      if (newHeight !== d.height) {
-        // Debounce or check to avoid infinite loops if onUpdate triggers re-render
-        // For now, we just rely on local style for smoothness, and update data on blur or periodically?
-        // Actually, updating data on every keypress might be heavy but ensures sync.
-        // Let's rely on the style for display and update data.height.
-        // onUpdate({ ...d, height: newHeight }); 
-      }
     }
   }, [d.text]);
 
@@ -303,6 +371,8 @@ function SimpleTextNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart
     <div
       className={`min-w-[100px] min-h-[40px] p-2 relative group ${isSelected ? "rounded-lg" : "hover:border-2 hover:border-blue-200 hover:border-dashed"}`}
       onMouseDown={onStartDrag}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{ width: node.width, height: "auto" }} // Allow container to grow
     >
       <SelectionOverlay isSelected={!!isSelected} onResizeStart={onResizeStart} width={node.width} height={node.data.height} />
@@ -310,7 +380,6 @@ function SimpleTextNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart
         ref={textareaRef}
         value={d.text}
         onChange={(e) => {
-          // We need to update height in data so parent InfiniteCanvas knows
           e.target.style.height = "auto";
           const h = e.target.scrollHeight;
           onUpdate({ ...d, text: e.target.value, height: h });
@@ -319,62 +388,66 @@ function SimpleTextNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart
         style={{ fontSize: (d.fontSize || 18) + "px", height: d.height || "auto" }}
         placeholder="Type..."
         onMouseDown={(e) => e.stopPropagation()}
-        autoFocus={!d.text} // Autofocus if empty (newly created)
+        autoFocus={!d.text}
       />
+
+      {/* Connection Handles */}
+      {(isSelected || isHovered) && (
+        <ConnectionHandles onStart={() => onStartConnection?.()} />
+      )}
     </div>
   );
 }
 
 // ─── Simple Shape Node ─────────────────────────────────────────────
 // ─── Selection Overlay (Handles) ───────────────────────────────────
-// ─── Selection Overlay (Handles) ───────────────────────────────────
 interface SelectionOverlayProps {
   isSelected: boolean;
   onResizeStart?: (e: React.MouseEvent, handle: "tl" | "tr" | "bl" | "br") => void;
   width?: number;
   height?: number;
+  nodeType: string;
 }
 
-function SelectionOverlay({ isSelected, onResizeStart, width, height }: SelectionOverlayProps) {
+const resizableTypes = ['simple-shape', 'simple-circle', 'simple-text', 'mobile-frame', 'sticky-note', 'wireframe-sketch'];
+
+function SelectionOverlay({ isSelected, onResizeStart, width, height, nodeType }: SelectionOverlayProps) {
   if (!isSelected) return null;
 
   const handleStyle = "absolute w-3 h-3 bg-white border border-blue-500 z-50";
+  const canResize = resizableTypes.includes(nodeType);
 
   return (
     <>
       <div className="absolute inset-0 border border-blue-500 pointer-events-none" />
 
-      {/* Dimension Label (While resizing, but we don't have isResizing state here easily without prop drill. 
-          For now, show it if selected and width/height is available? Or just relies on user drag) 
-          Let's show it only if we added a `showDimensions` prop, but for now user asked for it "while resizing".
-          Since we lift state, we can't easily know "while resizing" here unless passed.
-          I'll skip the label inside this component for now and implement it in standard way or overlay.
-          Actually, let's just show the handles.
-      */}
+      {canResize && (
+        <>
+          {/* Top Left */}
+          <div
+            className={`${handleStyle} -top-1.5 -left-1.5 cursor-nwse-resize`}
+            onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, "tl"); }}
+          />
+          {/* Top Right */}
+          <div
+            className={`${handleStyle} -top-1.5 -right-1.5 cursor-nesw-resize`}
+            onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, "tr"); }}
+          />
+          {/* Bottom Left */}
+          <div
+            className={`${handleStyle} -bottom-1.5 -left-1.5 cursor-nesw-resize`}
+            onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, "bl"); }}
+          />
+          {/* Bottom Right */}
+          <div
+            className={`${handleStyle} -bottom-1.5 -right-1.5 cursor-nwse-resize`}
+            onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, "br"); }}
+          />
+        </>
+      )}
 
-      {/* Top Left */}
-      <div
-        className={`${handleStyle} -top-1.5 -left-1.5 cursor-nwse-resize`}
-        onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, "tl"); }}
-      />
-      {/* Top Right */}
-      <div
-        className={`${handleStyle} -top-1.5 -right-1.5 cursor-nesw-resize`}
-        onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, "tr"); }}
-      />
-      {/* Bottom Left */}
-      <div
-        className={`${handleStyle} -bottom-1.5 -left-1.5 cursor-nesw-resize`}
-        onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, "bl"); }}
-      />
-      {/* Bottom Right */}
-      <div
-        className={`${handleStyle} -bottom-1.5 -right-1.5 cursor-nwse-resize`}
-        onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, "br"); }}
-      />
-
-      {/* Dimension Label (Static for now if needed, or we render it from parent) */}
-      {(width && height) && (
+      {/* Dimension Label */}
+      {canResize && width && height && (
         <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
           {Math.round(width)} × {Math.round(height)}
         </div>
@@ -384,28 +457,44 @@ function SelectionOverlay({ isSelected, onResizeStart, width, height }: Selectio
 }
 
 
-function SimpleShapeNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart }: NodeProps) {
+function SimpleShapeNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart, onStartConnection }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const d = node.data;
   return (
     <div
       className={`w-full h-full ${d.color?.includes("bg-") ? d.color : "bg-transparent border-4 border-slate-800"} flex items-center justify-center shadow-sm relative group`}
-      style={{ overflow: "hidden" }} // Removed resize: both
+      style={{ overflow: "hidden" }}
       onMouseDown={onStartDrag}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <SelectionOverlay isSelected={!!isSelected} onResizeStart={onResizeStart} width={node.width} height={d.height} />
+      <SelectionOverlay isSelected={!!isSelected} onResizeStart={onResizeStart} width={node.width} height={d.height} nodeType={node.type} />
+
+      {/* Connection Handles */}
+      {(isSelected || isHovered) && (
+        <ConnectionHandles onStart={() => onStartConnection?.()} />
+      )}
     </div>
   );
 }
 
-function SimpleCircleNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart }: NodeProps) {
+function SimpleCircleNode({ node, onUpdate, isSelected, onStartDrag, onResizeStart, onStartConnection }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const d = node.data;
   return (
     <div
       className={`w-full h-full rounded-full ${d.color?.includes("bg-") ? d.color : "bg-transparent border-4 border-slate-800"} flex items-center justify-center shadow-sm relative group`}
-      style={{ overflow: "hidden" }} // Removed resize: both
+      style={{ overflow: "hidden" }}
       onMouseDown={onStartDrag}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <SelectionOverlay isSelected={!!isSelected} onResizeStart={onResizeStart} width={node.width} height={d.height} />
+      <SelectionOverlay isSelected={!!isSelected} onResizeStart={onResizeStart} width={node.width} height={d.height} nodeType={node.type} />
+
+      {/* Connection Handles */}
+      {(isSelected || isHovered) && (
+        <ConnectionHandles onStart={() => onStartConnection?.()} />
+      )}
     </div>
   );
 }
@@ -439,7 +528,17 @@ function PencilNode({ node, isSelected }: NodeProps) {
 }
 
 export function CanvasNodeRenderer(props: NodeProps) {
-  const { node, onUpdate, isSelected, onStartDrag, onDelete, onDuplicate } = props;
+  const {
+    node,
+    onUpdate,
+    isSelected,
+    onStartDrag,
+    onResizeStart,
+    onDelete,
+    onDuplicate,
+    onStartConnection,
+    onFinishConnection,
+  } = props;
 
   // 1. Handle Simple Nodes (Raw Rendering)
   if (node.type === "simple-text") {
@@ -454,6 +553,17 @@ export function CanvasNodeRenderer(props: NodeProps) {
   if (node.type === "pencil") {
     // Pencil nodes are transparent containers
     return <PencilNode {...props} />;
+  }
+
+  // 1.5 Handle bypassed nodes (Naked Rendering)
+  if (BYPASS_WRAPPER_TYPES.includes(node.type)) {
+    switch (node.type) {
+      case "sticky-note": return <StickyNoteNode {...props} />;
+      case "mobile-frame": return <MobileFrameNode {...props} />;
+      case "flow-step": return <FlowStepNode {...props} />;
+      case "wireframe-sketch": return <MobileFrameNode {...props} />;
+      default: return null;
+    }
   }
 
   // 2. Handle Standard Nodes (Wrapped in Card)
@@ -638,23 +748,33 @@ const stickyColorMap: Record<string, string> = {
   orange: "bg-orange-100 border-orange-200",
 };
 
-function StickyNoteNode({ node, onUpdate }: NodeProps) {
+function StickyNoteNode({ node, onUpdate, onStartDrag, isSelected, onStartConnection }: NodeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const d = node.data;
   const colors = stickyColorMap[d.color] || stickyColorMap.yellow;
   return (
-    <div className={`p-4 rounded-xl border min-h-[140px] ${colors}`}>
+    <div
+      className={`p-4 rounded-sm border shadow-md min-h-[140px] cursor-grab active:cursor-grabbing relative ${colors}`}
+      onMouseDown={onStartDrag}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <textarea
         value={d.text}
-        onChange={(e) => onUpdate({ ...d, text: e.target.value })}
-        className="w-full bg-transparent resize-none focus:outline-none text-[16px] min-h-[100px] leading-relaxed"
+        onChange={(e) => {
+          onUpdate({ ...d, text: e.target.value });
+        }}
+        className="w-full h-full bg-transparent resize-none focus:outline-none text-[18px] font-handwriting min-h-[120px] leading-relaxed overflow-hidden"
         placeholder="Type here..."
         onMouseDown={(e) => e.stopPropagation()}
       />
+      {(isSelected || isHovered) && (
+        <ConnectionHandles onStart={() => onStartConnection?.()} />
+      )}
     </div>
   );
 }
 
-// ─── HMW Card ────────────────────────────────────────────────────
 // ─── HMW Card ────────────────────────────────────────────────────
 function HmwCardNode({ node, onUpdate }: NodeProps) {
   const d = node.data;
@@ -685,15 +805,15 @@ function HmwCardNode({ node, onUpdate }: NodeProps) {
     <div className="bg-white border-0 rounded-xl p-2">
       <div className="flex items-center gap-3 mb-4 px-1">
         <span className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-[16px]">💡</span>
-        <span className="text-[14px] font-medium text-muted-foreground">"How Might We" Statements</span>
+        <span className="text-base font-medium text-muted-foreground">"How Might We" Statements</span>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {items.map((item: any) => (
           <div key={item.id} className="group relative">
             <input
               value={item.text}
               onChange={(e) => updateItem(item.id, e.target.value)}
-              className="w-full bg-yellow-50/50 hover:bg-yellow-50 border border-transparent focus:border-yellow-300 rounded-lg px-4 py-3 text-[15px] focus:outline-none transition-colors"
+              className="w-full bg-yellow-50/50 hover:bg-yellow-50 border border-transparent focus:border-yellow-300 rounded-lg px-5 py-4 text-lg focus:outline-none transition-colors"
               placeholder="How might we..."
               onMouseDown={(e) => e.stopPropagation()}
             />
@@ -718,7 +838,7 @@ function HmwCardNode({ node, onUpdate }: NodeProps) {
   );
 }
 
-// ─── Persona Card ────────────────────────────────────────────────
+// ─── Sticky Note ─────────────────────────────────────────────────
 function PersonaCardNode({ node, onUpdate }: NodeProps) {
   const d = node.data;
 
@@ -737,18 +857,18 @@ function PersonaCardNode({ node, onUpdate }: NodeProps) {
   return (
     <div className="p-2">
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white shrink-0">
-          <span className="text-[24px]">{d.avatar}</span>
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white shrink-0">
+          <span className="text-[32px]">{d.avatar}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <InlineEdit value={d.name} onChange={(v) => onUpdate({ ...d, name: v })} className="text-[18px] font-semibold" placeholder="Name..." />
-          <div className="flex gap-3">
-            <InlineEdit value={d.role} onChange={(v) => onUpdate({ ...d, role: v })} className="text-[14px] text-muted-foreground flex-1" placeholder="Role..." />
-            <InlineEdit value={d.age} onChange={(v) => onUpdate({ ...d, age: v })} className="text-[14px] text-muted-foreground w-20" placeholder="Age..." />
+          <InlineEdit value={d.name} onChange={(v) => onUpdate({ ...d, name: v })} className="text-xl font-bold" placeholder="Name..." />
+          <div className="flex gap-4">
+            <InlineEdit value={d.role} onChange={(v) => onUpdate({ ...d, role: v })} className="text-base text-muted-foreground flex-1" placeholder="Role..." />
+            <InlineEdit value={d.age} onChange={(v) => onUpdate({ ...d, age: v })} className="text-base text-muted-foreground w-20" placeholder="Age..." />
           </div>
         </div>
       </div>
-      <InlineEdit value={d.bio} onChange={(v) => onUpdate({ ...d, bio: v })} className="text-[14px] bg-secondary/30 rounded-xl mb-4 p-3 leading-relaxed" multiline placeholder="Bio..." />
+      <InlineEdit value={d.bio} onChange={(v) => onUpdate({ ...d, bio: v })} className="text-base bg-secondary/30 rounded-xl mb-4 p-4 leading-relaxed" multiline placeholder="Bio..." />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <h4 className="text-[12px] text-green-600 tracking-wider uppercase mb-2 font-bold">Goals</h4>
@@ -824,18 +944,18 @@ function UserFlowNode({ node, onUpdate }: NodeProps) {
 
       {/* Step list */}
       {steps.map((step, i) => (
-        <div key={step.id} className={`flex items-center gap-3 rounded-xl p-3 border text-[14px] ${step.flag === "pain" ? "bg-red-50/50 border-red-200" :
+        <div key={step.id} className={`flex items-center gap-4 rounded-xl p-4 border text-base ${step.flag === "pain" ? "bg-red-50/50 border-red-200" :
           step.flag === "opportunity" ? "bg-emerald-50/50 border-emerald-200" :
             "bg-white border-border"
           } group/fs`}>
-          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] border shrink-0 font-medium ${step.flag === "pain" ? "bg-red-100 border-red-200 text-red-700" :
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border shrink-0 font-medium ${step.flag === "pain" ? "bg-red-100 border-red-200 text-red-700" :
             step.flag === "opportunity" ? "bg-emerald-100 border-emerald-200 text-emerald-700" :
               "bg-secondary border-border text-muted-foreground"
             }`}>{i + 1}</span>
           <input value={step.label} onChange={(e) => updateStep(step.id, "label", e.target.value)}
-            className="bg-transparent focus:outline-none flex-1 min-w-0 text-[15px]" onMouseDown={(e) => e.stopPropagation()} />
+            className="bg-transparent focus:outline-none flex-1 min-w-0 text-lg" onMouseDown={(e) => e.stopPropagation()} />
           <input value={step.note} onChange={(e) => updateStep(step.id, "note", e.target.value)}
-            className="bg-transparent focus:outline-none text-muted-foreground w-36 text-[13px]" placeholder="note..." onMouseDown={(e) => e.stopPropagation()} />
+            className="bg-transparent focus:outline-none text-muted-foreground w-40 text-sm" placeholder="note..." onMouseDown={(e) => e.stopPropagation()} />
           <div className="flex gap-1 opacity-0 group-hover/fs:opacity-100 transition-opacity">
             <button onClick={() => cycleFlag(step.id)} className="p-1.5 rounded hover:bg-secondary" title="Toggle flag">
               {step.flag === "none" ? <AlertTriangle className="w-4 h-4 text-muted-foreground/40" /> :
@@ -879,17 +999,17 @@ function ChecklistNode({ node, onUpdate }: NodeProps) {
 
   return (
     <div className="p-2">
-      <div className="flex items-center justify-between mb-3">
-        <InlineEdit value={d.title} onChange={(v) => onUpdate({ ...d, title: v })} className="text-[16px] font-medium" placeholder="Title..." />
-        <span className="text-[12px] text-muted-foreground">{checkedCount}/{items.length}</span>
+      <div className="flex items-center justify-between mb-4 px-2">
+        <InlineEdit value={d.title} onChange={(v) => onUpdate({ ...d, title: v })} className="text-lg font-semibold" placeholder="Title..." />
+        <span className="text-sm text-muted-foreground">{checkedCount}/{items.length}</span>
       </div>
       {items.map((item) => (
-        <div key={item.id} className="flex items-center gap-3 py-1.5 group/ci">
-          <button onClick={() => toggle(item.id)} className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${item.checked ? "bg-primary border-primary text-primary-foreground" : "border-border hover:border-primary/50"}`}>
-            {item.checked && <span className="text-[12px]">✓</span>}
+        <div key={item.id} className="flex items-center gap-3 py-2 group/ci">
+          <button onClick={() => toggle(item.id)} className={`w-6 h-6 rounded border flex items-center justify-center shrink-0 transition-colors ${item.checked ? "bg-primary border-primary text-primary-foreground" : "border-border hover:border-primary/50"}`}>
+            {item.checked && <span className="text-sm">✓</span>}
           </button>
           <input value={item.text} onChange={(e) => updateText(item.id, e.target.value)}
-            className={`bg-transparent focus:outline-none text-[15px] flex-1 ${item.checked ? "line-through text-muted-foreground" : ""}`}
+            className={`bg-transparent focus:outline-none text-base flex-1 ${item.checked ? "line-through text-muted-foreground" : ""}`}
             placeholder="Item..." onMouseDown={(e) => e.stopPropagation()} />
           <button onClick={() => remove(item.id)} className="opacity-0 group-hover/ci:opacity-100 text-muted-foreground/40 hover:text-red-500 p-1">
             <X className="w-4 h-4" />
@@ -903,7 +1023,6 @@ function ChecklistNode({ node, onUpdate }: NodeProps) {
   );
 }
 
-// ─── 2×2 Matrix ──────────────────────────────────────────────────
 // ─── 2×2 Matrix ──────────────────────────────────────────────────
 function MatrixNode({ node, onUpdate }: NodeProps) {
   const d = node.data;
@@ -939,18 +1058,18 @@ function MatrixNode({ node, onUpdate }: NodeProps) {
 
   return (
     <div className="p-2">
-      <div className="text-[14px] font-medium text-muted-foreground mb-3 px-1">Solution Prioritization (Impact vs. Effort)</div>
-      <div className="grid grid-cols-2 gap-3 h-full">
+      <div className="text-base font-medium text-muted-foreground mb-4 px-1">Solution Prioritization (Impact vs. Effort)</div>
+      <div className="grid grid-cols-2 gap-4 h-full">
         {quadrants.map((q) => (
-          <div key={q.key} className={`${q.bg} ${q.border} border rounded-2xl p-4 flex flex-col min-h-[200px]`}>
-            <div className={`text-[11px] font-bold uppercase tracking-wider mb-3 ${q.pill.split(" ")[1]}`}>{q.label}</div>
-            <div className="flex-1 space-y-3">
+          <div key={q.key} className={`${q.bg} ${q.border} border rounded-2xl p-6 flex flex-col min-h-[250px]`}>
+            <div className={`text-xs font-bold uppercase tracking-wider mb-4 ${q.pill.split(" ")[1]}`}>{q.label}</div>
+            <div className="flex-1 space-y-4">
               {items.filter((i: any) => i.quadrant === q.key).map((item: any) => (
                 <div key={item.id} className="group relative">
                   <textarea
                     value={item.text}
                     onChange={(e) => updateItem(item.id, e.target.value)}
-                    className="w-full bg-white/50 hover:bg-white border border-transparent focus:border-black/5 rounded-lg px-3 py-2 text-[14px] resize-none focus:outline-none transition-colors shadow-sm"
+                    className="w-full bg-white/50 hover:bg-white border border-transparent focus:border-black/5 rounded-lg px-4 py-3 text-base resize-none focus:outline-none transition-colors shadow-sm"
                     rows={2}
                     placeholder="Type idea..."
                     onMouseDown={(e) => e.stopPropagation()}
@@ -981,9 +1100,9 @@ function MatrixNode({ node, onUpdate }: NodeProps) {
 function PrincipleCardNode({ node, onUpdate }: NodeProps) {
   const d = node.data;
   return (
-    <div className={`p-6 rounded-xl border ${d.color || "bg-blue-50 border-blue-200"}`}>
-      <InlineEdit value={d.title} onChange={(v) => onUpdate({ ...d, title: v })} className="text-[18px] mb-2 font-medium" placeholder="Principle name..." />
-      <InlineEdit value={d.description} onChange={(v) => onUpdate({ ...d, description: v })} className="text-[14px] text-muted-foreground leading-relaxed" multiline placeholder="Describe..." />
+    <div className={`p-8 rounded-xl border ${d.color || "bg-blue-50 border-blue-200"}`}>
+      <InlineEdit value={d.title} onChange={(v) => onUpdate({ ...d, title: v })} className="text-xl mb-3 font-bold" placeholder="Principle name..." />
+      <InlineEdit value={d.description} onChange={(v) => onUpdate({ ...d, description: v })} className="text-base text-muted-foreground leading-relaxed" multiline placeholder="Describe..." />
     </div>
   );
 }
@@ -994,12 +1113,12 @@ function PrincipleCardNode({ node, onUpdate }: NodeProps) {
 function ProblemBriefNode({ node, onUpdate }: NodeProps) {
   const d = node.data;
   return (
-    <div className="p-4 bg-white rounded-xl border border-blue-100 shadow-sm">
-      <div className="flex items-center gap-2 mb-4 border-b pb-2">
-        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-          <FileText className="w-5 h-5" />
+    <div className="p-6 bg-white rounded-xl border border-blue-100 shadow-sm">
+      <div className="flex items-center gap-3 mb-6 border-b pb-3">
+        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+          <FileText className="w-6 h-6" />
         </div>
-        <span className="text-lg font-bold text-blue-900">Problem Brief</span>
+        <span className="text-xl font-bold text-blue-900">Problem Brief</span>
       </div>
       <div className="space-y-4">
         <div>
@@ -1032,10 +1151,10 @@ function SuccessMetricsNode({ node, onUpdate }: NodeProps) {
   };
 
   return (
-    <div className="p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Target className="w-6 h-6 text-green-600" />
-        <span className="text-lg font-bold text-green-900">Success Metrics</span>
+    <div className="p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <Target className="w-8 h-8 text-green-600" />
+        <span className="text-xl font-bold text-green-900">Success Metrics</span>
       </div>
       <div className="space-y-3">
         {metrics.map((m: any) => (
@@ -1079,10 +1198,10 @@ function UserContextNode({ node, onUpdate }: NodeProps) {
   const addUser = () => onUpdate({ ...d, users: [...users, { id: `u-${Date.now()}`, name: "New User", count: "Primary" }] });
 
   return (
-    <div className="p-3">
-      <div className="flex items-center gap-2 mb-3">
-        <Users className="w-5 h-5 text-indigo-600" />
-        <span className="font-bold text-indigo-900">User Context</span>
+    <div className="p-4">
+      <div className="flex items-center gap-3 mb-4">
+        <Users className="w-6 h-6 text-indigo-600" />
+        <span className="font-bold text-lg">User Context</span>
       </div>
       <div className="space-y-2">
         {users.map((u: any) => (

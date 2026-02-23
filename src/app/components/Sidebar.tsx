@@ -16,20 +16,42 @@ interface SidebarProps {
   onNavigate: (id: string) => void;
 }
 
-const sections = [
-  { id: "brief", label: "Brief", icon: FileText },
-  { id: "understand", label: "Understand", icon: Compass },
-  { id: "research", label: "Users", icon: Users },
-  { id: "personas", label: "Personas", icon: UserCircle },
-  { id: "journey", label: "User Flow", icon: Route },
-  { id: "ideation", label: "Ideation", icon: Lightbulb },
-  { id: "wireframes", label: "Wireframes", icon: PenTool },
-  { id: "principles", label: "Principles", icon: Target },
-  { id: "metrics", label: "Metrics", icon: BarChart3 },
-  { id: "next-steps", label: "Next Steps", icon: Clock },
+const navigation = [
+  {
+    title: "Project Initial",
+    items: [
+      { id: "brief", label: "Brief", icon: FileText },
+      { id: "understand", label: "Understand", icon: Compass },
+    ],
+  },
+  {
+    title: "User Discovery",
+    items: [
+      { id: "research", label: "Users", icon: Users },
+      { id: "personas", label: "Personas", icon: UserCircle },
+      { id: "journey", label: "User Flow", icon: Route },
+    ],
+  },
+  {
+    title: "Iterative Design",
+    items: [
+      { id: "ideation", label: "Ideation", icon: Lightbulb },
+      { id: "wireframes", label: "Wireframes", icon: PenTool },
+      { id: "principles", label: "Principles", icon: Target },
+    ],
+  },
+  {
+    title: "Planning",
+    items: [
+      { id: "metrics", label: "Metrics", icon: BarChart3 },
+      { id: "next-steps", label: "Next Steps", icon: Clock },
+    ],
+  },
 ];
 
 export function Sidebar({ activeSection, onNavigate }: SidebarProps) {
+  let globalIndex = 0;
+
   return (
     <aside className="w-16 lg:w-56 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 h-full">
       {/* Logo */}
@@ -46,30 +68,43 @@ export function Sidebar({ activeSection, onNavigate }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-        {sections.map((section, index) => {
-          const Icon = section.icon;
-          const isActive = activeSection === section.id;
-          return (
-            <button
-              key={section.id}
-              onClick={() => onNavigate(section.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-left ${
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-foreground"
-                  : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-              }`}
-            >
-              <div className="flex items-center justify-center w-5">
-                <Icon className="w-4 h-4" />
-              </div>
-              <span className="hidden lg:block text-[13px]">
-                <span className="text-muted-foreground mr-1.5">{index + 1}.</span>
-                {section.label}
-              </span>
-            </button>
-          );
-        })}
+      <nav className="flex-1 py-4 space-y-6 overflow-y-auto">
+        {navigation.map((group) => (
+          <div key={group.title} className="px-2">
+            <h4 className="hidden lg:block px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              {group.title}
+            </h4>
+            <div className="space-y-0.5">
+              {group.items.map((section) => {
+                const Icon = section.icon;
+                const isActive = activeSection === section.id;
+                const currentIndex = ++globalIndex;
+
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => onNavigate(section.id)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all text-left ${
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-foreground"
+                        : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center w-5">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="hidden lg:block text-[13px]">
+                      <span className="text-muted-foreground mr-1.5">
+                        {currentIndex}.
+                      </span>
+                      {section.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer */}

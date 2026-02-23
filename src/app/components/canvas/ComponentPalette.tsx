@@ -122,7 +122,6 @@ const CATEGORIES = [
   "4. Prototype & Flow",
   "5. Test & Summarize",
   "Tools",
-  "Legacy",
 ];
 
 export function ComponentPalette({ collapsed, onToggleCollapse }: ComponentPaletteProps) {
@@ -155,7 +154,7 @@ export function ComponentPalette({ collapsed, onToggleCollapse }: ComponentPalet
 
   if (collapsed) {
     return (
-      <aside className="w-12 bg-white border-r border-border flex flex-col items-center py-3 gap-2 shrink-0 z-20">
+      <aside className="w-12 bg-white border-r border-border flex flex-col items-center py-3 gap-2 shrink-0 z-20" data-html2canvas-ignore>
         <button
           onClick={onToggleCollapse}
           className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground mb-2"
@@ -182,7 +181,7 @@ export function ComponentPalette({ collapsed, onToggleCollapse }: ComponentPalet
   }
 
   return (
-    <aside className="w-56 bg-white border-r border-border flex flex-col shrink-0 h-full">
+    <aside className="w-56 bg-white border-r border-border flex flex-col shrink-0 h-full" data-html2canvas-ignore>
       <div className="px-3 py-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <PenTool className="w-4 h-4 text-primary" />

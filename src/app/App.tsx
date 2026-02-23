@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import type { CanvasNode, CanvasViewport, ToolMode, CanvasComponentType } from "./components/canvas/types";
-import { COMPONENT_DEFAULTS, createDefaultData } from "./components/canvas/types";
+import { Toaster, toast } from "sonner";
+import { COMPONENT_DEFAULTS, createDefaultData, type Edge, type ConnectingState } from "./components/canvas/types";
 import { InfiniteCanvas } from "./components/canvas/InfiniteCanvas";
 import { ComponentPalette, PaletteItemDragPreview } from "./components/canvas/ComponentPalette";
 import { CanvasToolbar } from "./components/canvas/CanvasToolbar";
@@ -13,6 +14,7 @@ const INITIAL_NODES: CanvasNode[] = [];
 
 export default function App() {
   const [nodes, setNodes] = useState<CanvasNode[]>(INITIAL_NODES);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [viewport, setViewport] = useState<CanvasViewport>({ x: 40, y: 40, zoom: 1.0 });
   const [toolMode, setToolMode] = useState<ToolMode>("select");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -21,6 +23,11 @@ export default function App() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const [activeDragType, setActiveDragType] = useState<CanvasComponentType | null>(null);
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
+  const [connectingState, setConnectingState] = useState<ConnectingState>({
+    isConnecting: false,
+    startNodeId: null,
+    currentMousePos: null,
+  });
 
   const handleColorChange = (color: string) => {
     setSelectedColor(color);
@@ -46,6 +53,7 @@ export default function App() {
       if (e.key === "d" || e.key === "D") setToolMode("draw");
       if ((e.key === "Delete" || e.key === "Backspace") && selectedIds.size > 0) {
         setNodes((prev) => prev.filter((n) => !selectedIds.has(n.id)));
+        setEdges((prev) => prev.filter((e) => !selectedIds.has(e.startNodeId) && !selectedIds.has(e.endNodeId)));
         setSelectedIds(new Set());
       }
     };
@@ -154,35 +162,39 @@ export default function App() {
     setSelectedIds(new Set());
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleExport = async () => {
-    const containerEl = document.querySelector("[data-canvas-container]");
-    if (!containerEl) return;
+    const containerEl = document.getElementById("export-canvas-container");
+    if (!containerEl) {
+      toast.error("Canvas container not found");
+      return;
+    }
+
+    setIsExporting(true);
+    const toastId = toast.loading("Downloading canvas...");
 
     try {
-      // Dynamically import html2canvas to avoid SSR issues if any, though this is SPA
       const html2canvas = (await import("html2canvas")).default;
 
       const canvas = await html2canvas(containerEl as HTMLElement, {
-        backgroundColor: "#f8f8fa", // Match canvas background
-        scale: 2, // Higher quality
+        backgroundColor: "#f8f8fa",
+        scale: 2,
         logging: false,
-        ignoreElements: (element: Element) => {
-          // Ignore the drawing canvas if it's empty or other UI elements if needed
-          return element.classList.contains("pointer-events-none") && element.tagName === "CANVAS";
-          // Actually we want to capture the drawing canvas!
-          // But maybe we want to ignore the grid background if html2canvas captures it poorly?
-          // For now, capture everything.
-          return false;
-        }
+        useCORS: true,
+        allowTaint: true,
       });
 
-      const date = new Date().toISOString().split("T")[0];
       const link = document.createElement("a");
-      link.download = `whiteboard-export-${date}.png`;
+      link.download = "whiteboard-session.png";
       link.href = canvas.toDataURL("image/png");
       link.click();
+      toast.success("Download complete!", { id: toastId });
     } catch (err) {
       console.error("Export failed:", err);
+      toast.error("Export failed. Please try again.", { id: toastId });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -206,6 +218,7 @@ export default function App() {
           selectedCount={selectedIds.size}
           onDeleteSelected={deleteSelected}
           onExport={handleExport}
+          isExporting={isExporting}
           selectedColor={selectedColor}
           onColorChange={handleColorChange}
         />
@@ -226,12 +239,17 @@ export default function App() {
               onSelectedIdsChange={setSelectedIds}
               drawingCanvasRef={drawingCanvasRef}
               selectedColor={selectedColor}
+              edges={edges}
+              onEdgesChange={setEdges}
+              connectingState={connectingState}
+              onConnectingStateChange={setConnectingState}
             />
           </div>
         </div>
         <DragOverlay>
           {activeDragType ? <PaletteItemDragPreview type={activeDragType} /> : null}
         </DragOverlay>
+        <Toaster position="top-center" />
       </div>
     </DndContext>
   );

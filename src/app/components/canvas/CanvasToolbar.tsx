@@ -12,6 +12,7 @@ import {
   Type,
   Square,
   ChevronDown,
+  ArrowRight,
 } from "lucide-react";
 import type { ToolMode, CanvasViewport } from "./types";
 import { DomainSelector, type Domain } from "../DomainSelector";
@@ -29,6 +30,7 @@ interface CanvasToolbarProps {
   selectedCount: number;
   onDeleteSelected: () => void;
   onExport: () => void;
+  isExporting: boolean;
   selectedColor?: string;
   onColorChange?: (color: string) => void;
 }
@@ -46,6 +48,7 @@ export function CanvasToolbar({
   selectedCount,
   onDeleteSelected,
   onExport,
+  isExporting,
   selectedColor,
   onColorChange,
 }: CanvasToolbarProps) {
@@ -77,7 +80,7 @@ export function CanvasToolbar({
   return (
     <>
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white w-full shrink-0 z-50 h-16">
+      <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white w-full shrink-0 z-50 h-16" data-html2canvas-ignore>
         {/* LEFT: Logo & Title */}
         <div className="flex items-center gap-4 min-w-fit">
           <div className="flex items-center gap-3">
@@ -103,9 +106,10 @@ export function CanvasToolbar({
 
           <button
             onClick={onExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-[12px] hover:bg-primary/90 transition-all font-medium shadow-sm whitespace-nowrap"
+            disabled={isExporting}
+            className={`flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-[12px] hover:bg-primary/90 transition-all font-medium shadow-sm whitespace-nowrap ${isExporting ? "opacity-70 cursor-not-allowed" : ""}`}
           >
-            Export
+            {isExporting ? "Exporting..." : "Export"}
           </button>
 
           {/* Timer */}
@@ -134,6 +138,7 @@ export function CanvasToolbar({
             { mode: "text", icon: <Type className="w-5 h-5" />, label: "Text", shortcut: "T" },
             { mode: "shape", icon: <Square className="w-5 h-5" />, label: "Square", shortcut: "S" },
             { mode: "circle", icon: <div className="w-4 h-4 rounded-full border-2 border-current" />, label: "Circle", shortcut: "C" },
+            { mode: "arrow", icon: <ArrowRight className="w-5 h-5" />, label: "Arrow", shortcut: "A" },
           ].map((t) => (
             <button
               key={t.mode}

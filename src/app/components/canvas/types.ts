@@ -43,7 +43,19 @@ export interface CanvasNode {
   data: Record<string, any>;
 }
 
-export type ToolMode = "select" | "pan" | "draw" | "text" | "shape" | "circle" | "eraser";
+export interface Edge {
+  id: string;
+  startNodeId: string;
+  endNodeId: string;
+}
+
+export interface ConnectingState {
+  isConnecting: boolean;
+  startNodeId: string | null;
+  currentMousePos: { x: number; y: number } | null;
+}
+
+export type ToolMode = "select" | "pan" | "draw" | "text" | "shape" | "circle" | "arrow" | "eraser";
 export type ShapeType = "rectangle" | "circle" | "diamond";
 
 export interface CanvasViewport {
@@ -59,7 +71,7 @@ export const COMPONENT_DEFAULTS: Record<
   // 1. Empathize & Analyze (Maps to Steps 1-4)
   "persona-card": { width: 480, label: "Persona Card", emoji: "👤", category: "1. Empathize & Analyze" },
   "who-what-why": { width: 800, label: "Empathy Map", emoji: "❤️", category: "1. Empathize & Analyze" },
-  "user-context": { width: 360, label: "User Journey", emoji: "🗺️", category: "1. Empathize & Analyze" }, // Mapping 'User Journey' to 'user-context' or 'user-flow'? User Flow is in 4. Let's use user-context or creating a journey map. User said 'User Journey' in 1 and 'User Flow' in 4. I'll use user-context for Journey for now.
+  "user-context": { width: 360, label: "User Journey", emoji: "🗺️", category: "1. Empathize & Analyze" },
   "competitor-analysis": { width: 600, label: "Competitor Analysis", emoji: "📊", category: "1. Empathize & Analyze" },
 
   // 2. Define & Strategy (Maps to Steps 5-6)
@@ -67,7 +79,7 @@ export const COMPONENT_DEFAULTS: Record<
   "hmw-card": { width: 400, label: "HMW Statement", emoji: "💡", category: "2. Define & Strategy" },
   "business-goals": { width: 800, label: "Business Goals", emoji: "🎯", category: "2. Define & Strategy" },
   "usp-card": { width: 400, label: "USP Card", emoji: "💎", category: "2. Define & Strategy" },
-  "principle-card": { width: 400, label: "Design Principle", emoji: "⚡", category: "2. Define & Strategy" }, // Kept for completeness
+  "principle-card": { width: 400, label: "Design Principle", emoji: "⚡", category: "2. Define & Strategy" },
 
   // 3. Ideate & Brainstorm (Maps to Steps 7)
   "brainstorm-list": { width: 360, label: "Brainstorm List", emoji: "🌪️", category: "3. Ideate & Brainstorm" },
@@ -75,7 +87,8 @@ export const COMPONENT_DEFAULTS: Record<
   "sticky-note": { width: 240, label: "Sticky Note", emoji: "🟨", category: "3. Ideate & Brainstorm" },
   "text-card": { width: 400, label: "Text Card", emoji: "📝", category: "3. Ideate & Brainstorm" },
   "prioritization-matrix": { width: 800, label: "Prioritization Matrix", emoji: "田", category: "3. Ideate & Brainstorm" },
-  "matrix": { width: 600, label: "Feedback Grid", emoji: "▦", category: "3. Ideate & Brainstorm" }, // Moved from Test to Ideate
+  "matrix": { width: 600, label: "Feedback Grid", emoji: "▦", category: "3. Ideate & Brainstorm" },
+  "crazy-8s": { width: 800, label: "Crazy 8s", emoji: "🎱", category: "3. Ideate & Brainstorm" },
 
   // 4. Prototype & Flow (Maps to Steps 8-10)
   "user-flow": { width: 600, label: "User Flow", emoji: "🔀", category: "4. Prototype & Flow" },
@@ -91,17 +104,14 @@ export const COMPONENT_DEFAULTS: Record<
 
   // Tools / Misc
   "section-header": { width: 340, label: "Section Header", emoji: "🏷️", category: "Tools" },
-  "shape": { width: 100, label: "Shape", emoji: "🟦", category: "Tools" },
   "clarifying-questions": { width: 500, label: "Clarifying Questions", emoji: "❓", category: "Tools" },
-  "simple-text": { width: 200, label: "Text", emoji: "T", category: "Tools" },
-  "simple-shape": { width: 100, label: "Square", emoji: "🟦", category: "Tools" },
-  "simple-circle": { width: 100, label: "Circle", emoji: "🔴", category: "Tools" },
-  "pencil": { width: 200, label: "Pencil", emoji: "✏️", category: "Tools" },
-  "crazy-8s": { width: 800, label: "Crazy 8s", emoji: "🎱", category: "3. Ideate & Brainstorm" },
-
-  // Legacy
-  "timeline": { width: 600, label: "Timeline", emoji: "📅", category: "Legacy" },
-  "user-context-card": { width: 320, label: "User Context (Old)", emoji: "📋", category: "Legacy" },
+  "timeline": { width: 600, label: "Timeline", emoji: "📅", category: "Planning" },
+  "shape": { width: 100, label: "Shape", emoji: "🟦", category: "Hidden" },
+  "simple-text": { width: 200, label: "Text", emoji: "T", category: "Hidden" },
+  "simple-shape": { width: 100, label: "Square", emoji: "🟦", category: "Hidden" },
+  "simple-circle": { width: 100, label: "Circle", emoji: "🔴", category: "Hidden" },
+  "pencil": { width: 200, label: "Pencil", emoji: "✏️", category: "Hidden" },
+  "user-context-card": { width: 320, label: "User Context (Old)", emoji: "📋", category: "Hidden" },
 };
 
 const STICKY_COLORS = ["yellow", "blue", "green", "pink", "purple", "orange", "red", "teal"];
