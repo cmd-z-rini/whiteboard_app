@@ -3,7 +3,8 @@
 
 > A specialized, infinite-canvas whiteboarding tool designed specifically for Product Design and PM interview prep. Built as an experiment in AI-assisted development.
 
-![Whiteboard Helper Preview](https://via.placeholder.com/800x400?text=Whiteboard+Helper+Preview) *(Note: You can replace this link later with an actual screenshot of your app!)*
+<img width="1440" height="796" alt="image" src="https://github.com/user-attachments/assets/dbe9ff3d-6911-4357-a20d-56baccf19956" />
+
 
 ## 🚀 The "Why"
 I needed a clean, distraction-free space to practice whiteboarding frameworks for my upcoming interviews. Instead of using existing tools, I decided to test the limits of modern Agentic IDEs (AI coding agents) to build a custom, FigJam-style whiteboard from scratch. 
