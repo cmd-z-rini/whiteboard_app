@@ -197,135 +197,210 @@ export function InfiniteCanvas({
     });
   }, [nodes]);
 
-
-  // Mouse Move
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const pos = getLogicPos(e);
+  const pos = getLogicPos(e);
 
-    // Drawing
-    if (isDrawing && effectiveMode === "draw") {
-      setCurrentPath(prev => [...prev, pos]);
-      return;
+  // ─────────────────────────────────────────────────────────────
+  // 1. DRAWING MODE (Pencil Tool)
+  // ─────────────────────────────────────────────────────────────
+  if (isDrawing && effectiveMode === "draw") {
+    setCurrentPath(prev => [...prev, pos]);
+    return;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 2. SHAPE CREATION (Rectangle/Circle Dragging)
+  // ─────────────────────────────────────────────────────────────
+  if (tempNode && dragStart) {
+    // Delta in logic space (already handled by getLogicPos)
+    let width = pos.x - dragStart.x;
+    let height = pos.y - dragStart.y;
+
+    // Shift: Lock aspect ratio to 1:1 (square/circle)
+    if (e.shiftKey) {
+      const size = Math.max(Math.abs(width), Math.abs(height));
+      width = width < 0 ? -size : size;
+      height = height < 0 ? -size : size;
     }
 
-    // Shape Resize (User Creating Shape)
-    if (tempNode && dragStart) {
-      let width = pos.x - dragStart.x;
-      let height = pos.y - dragStart.y;
+    setTempNode({
+      ...tempNode,
+      width: Math.abs(width),
+      x: width < 0 ? pos.x : dragStart.x,
+      y: height < 0 ? pos.y : dragStart.y,
+      data: { ...tempNode.data, height: Math.abs(height) }
+    });
+    return;
+  }
 
-      if (e.shiftKey) {
-        const size = Math.max(Math.abs(width), Math.abs(height));
-        width = width < 0 ? -size : size;
-        height = height < 0 ? -size : size;
-      }
+  // ─────────────────────────────────────────────────────────────
+  // 3. NODE RESIZE (8-Handle Transformer)
+  // ─────────────────────────────────────────────────────────────
+  if (resizeState) {
+    const { id, initialBounds: ib, startMouse, handle } = resizeState;
+    
+    // Calculate screen-space delta, then convert to logic space
+    const screenDx = e.clientX - startMouse.x;
+    const screenDy = e.clientY - startMouse.y;
+    const dx = screenDx / viewport.zoom;
+    const dy = screenDy / viewport.zoom;
 
-      setTempNode({
-        ...tempNode,
-        width: Math.abs(width),
-        x: width < 0 ? pos.x : dragStart.x,
-        y: height < 0 ? pos.y : dragStart.y,
-        data: { ...tempNode.data, height: Math.abs(height) }
-      });
-      return;
+    let newX = ib.x;
+    let newY = ib.y;
+    let newW = ib.w;
+    let newH = ib.h;
+
+    // Apply delta based on handle direction
+    switch (handle) {
+      case "br": // Bottom-Right (standard resize)
+        newW = ib.w + dx;
+        newH = ib.h + dy;
+        break;
+      case "bl": // Bottom-Left
+        newW = ib.w - dx;
+        newH = ib.h + dy;
+        newX = ib.x + dx;
+        break;
+      case "tr": // Top-Right
+        newW = ib.w + dx;
+        newH = ib.h - dy;
+        newY = ib.y + dy;
+        break;
+      case "tl": // Top-Left
+        newW = ib.w - dx;
+        newH = ib.h - dy;
+        newX = ib.x + dx;
+        newY = ib.y + dy;
+        break;
     }
 
-    // Interactive Node Resizing
-    if (resizeState) {
-      const { initialBounds: ib, startMouse, handle } = resizeState;
-      const zoom = viewport.zoom;
-      const dx = (e.clientX - startMouse.x) / zoom;
-      const dy = (e.clientY - startMouse.y) / zoom;
-
-      let newX = ib.x;
-      let newY = ib.y;
-      let newW = ib.w;
-      let newH = ib.h;
-
-      // Logic per handle
-      if (handle === "br") { newW = ib.w + dx; newH = ib.h + dy; }
-      else if (handle === "bl") { newW = ib.w - dx; newH = ib.h + dy; newX = ib.x + dx; }
-      else if (handle === "tr") { newW = ib.w + dx; newH = ib.h - dy; newY = ib.y + dy; }
-      else if (handle === "tl") { newW = ib.w - dx; newH = ib.h - dy; newX = ib.x + dx; newY = ib.y + dy; }
-
-      // Aspect Ratio (Shift)
-      if (e.shiftKey) {
-        // This is tricky for non-br handles, but simple approximation:
-        // Use the dominant dimension change
-        const ar = ib.w / ib.h;
-        if (handle === "br" || handle === "tl") {
-          // For simplicity, just sync width/height change if creating from scratch or use AR
-          // Let's just create a square change if no prior AR, but we have existing AR.
-          // If we want perfect square, we force AR=1? FigJam keeps AR usually.
-          // Let's force AR.
-          if (Math.abs(newW / ib.w) > Math.abs(newH / ib.h)) {
-            newH = newW / ar;
-            if (handle.includes("t")) newY = ib.y + (ib.h - newH); // fix top anchor
-          } else {
-            newW = newH * ar;
-            if (handle.includes("l")) newX = ib.x + (ib.w - newW); // fix left anchor
-          }
+    // Shift: Preserve aspect ratio
+    if (e.shiftKey) {
+      const aspectRatio = ib.w / ib.h;
+      
+      // Use dominant axis (larger change) to drive the resize
+      if (Math.abs(newW - ib.w) > Math.abs(newH - ib.h)) {
+        // Width changed more → height follows
+        newH = newW / aspectRatio;
+        
+        // Fix anchor point for top handles
+        if (handle === "tl" || handle === "tr") {
+          newY = ib.y + ib.h - newH;
         }
-        // Similar logic for other handles... simplified "square" resizing often suffices for MVP.
-        // Let's stick to the simple square/circle logic which is aspect ratio 1:1 if it was 1:1
+      } else {
+        // Height changed more → width follows
+        newW = newH * aspectRatio;
+        
+        // Fix anchor point for left handles
+        if (handle === "tl" || handle === "bl") {
+          newX = ib.x + ib.w - newW;
+        }
       }
-
-      // Center Resize (Alt)
-      if (e.altKey) {
-        // This is complex to combine with handles. 
-        // Simple center resize:
-        // double the delta applies to WH, and XY moves by delta (inv)
-        // MVP: Skip Alt for now to reduce risk, focus on Handles working perfectly first.
-      }
-
-      // Min Size
-      if (newW < 20) newW = 20;
-      if (newH < 20) newH = 20;
-
-      onNodesChange(nodes.map(n => n.id === resizeState.id ? {
-        ...n,
-        x: newX,
-        y: newY,
-        width: Math.abs(newW),
-        data: { ...n.data, height: Math.abs(newH) }
-      } : n));
-
-      return;
     }
 
-    // Panning
-    if (isPanningRef.current) {
-      onViewportChange({
-        ...viewport,
-        x: e.clientX - panStartRef.current.x,
-        y: e.clientY - panStartRef.current.y,
-      });
-      return;
+    // Alt: Center-origin resize (scale from center, not corner)
+    if (e.altKey) {
+      const wDelta = newW - ib.w;
+      const hDelta = newH - ib.h;
+      
+      newW = ib.w + wDelta * 2;
+      newH = ib.h + hDelta * 2;
+      newX = ib.x - wDelta;
+      newY = ib.y - hDelta;
     }
 
-    // Dragging Nodes
-    if (dragRef.current) {
-      const { id, startX, startY, nodeStartX, nodeStartY } = dragRef.current;
-      const dx = (e.clientX - startX) / viewport.zoom;
-      const dy = (e.clientY - startY) / viewport.zoom;
-      onNodesChange(
-        nodes.map((n) =>
-          n.id === id ? { ...n, x: nodeStartX + dx, y: nodeStartY + dy } : n
-        )
-      );
+    // Enforce minimum size (prevent negative/collapsed nodes)
+    const MIN_SIZE = 20;
+    if (newW < MIN_SIZE) {
+      if (handle.includes("l")) newX = ib.x + ib.w - MIN_SIZE;
+      newW = MIN_SIZE;
+    }
+    if (newH < MIN_SIZE) {
+      if (handle.includes("t")) newY = ib.y + ib.h - MIN_SIZE;
+      newH = MIN_SIZE;
     }
 
-    // Selection Box
-    if (selectionBox) {
-      const rect = containerRef.current!.getBoundingClientRect();
-      const currentX = e.clientX - rect.left;
-      const currentY = e.clientY - rect.top;
-      setSelectionBox(prev => ({
-        ...prev!,
-        w: currentX - prev!.x,
-        h: currentY - prev!.y
-      }));
-    }
-  }, [effectiveMode, isDrawing, dragStart, tempNode, viewport, getLogicPos, onViewportChange, dragRef, nodes, onNodesChange, selectionBox, resizeState]);
+    // Update node (surgical re-render: only the resizing node)
+    onNodesChange(nodes.map(n => n.id === id ? {
+      ...n,
+      x: newX,
+      y: newY,
+      width: newW,
+      data: { ...n.data, height: newH }
+    } : n));
+
+    return;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 4. CANVAS PANNING (Space Key / Middle Mouse)
+  // ─────────────────────────────────────────────────────────────
+  if (isPanningRef.current) {
+    // Pan operates in SCREEN space (viewport.x/y are screen pixels)
+    onViewportChange({
+      ...viewport,
+      x: e.clientX - panStartRef.current.x,
+      y: e.clientY - panStartRef.current.y,
+    });
+    return;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 5. NODE DRAGGING (Move Selected Elements)
+  // ─────────────────────────────────────────────────────────────
+  if (dragRef.current) {
+    const { id, startX, startY, nodeStartX, nodeStartY } = dragRef.current;
+    
+    // Calculate screen delta, convert to logic space
+    const screenDx = e.clientX - startX;
+    const screenDy = e.clientY - startY;
+    const logicDx = screenDx / viewport.zoom;
+    const logicDy = screenDy / viewport.zoom;
+    
+    // Apply delta to initial position (not current position!)
+    onNodesChange(
+      nodes.map((n) =>
+        n.id === id ? { 
+          ...n, 
+          x: nodeStartX + logicDx, 
+          y: nodeStartY + logicDy 
+        } : n
+      )
+    );
+    return;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 6. BOX SELECTION (Shift+Drag Multi-Select)
+  // ─────────────────────────────────────────────────────────────
+  if (selectionBox) {
+    const rect = containerRef.current!.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
+    
+    // Selection box operates in SCREEN space (rendered on top of canvas)
+    setSelectionBox(prev => ({
+      ...prev!,
+      w: currentX - prev!.x,
+      h: currentY - prev!.y
+    }));
+    return;
+  }
+}, [
+  effectiveMode, 
+  isDrawing, 
+  dragStart, 
+  tempNode, 
+  viewport, 
+  getLogicPos, 
+  onViewportChange, 
+  dragRef, 
+  nodes, 
+  onNodesChange, 
+  selectionBox, 
+  resizeState
+]);
+
 
   // Mouse Up
   const handleMouseUp = useCallback(() => {
