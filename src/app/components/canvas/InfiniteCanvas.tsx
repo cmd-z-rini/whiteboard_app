@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { GripHorizontal, X, Copy } from "lucide-react";
-import type { CanvasNode, CanvasViewport, ToolMode } from "./types";
+import type { CanvasNode, CanvasViewport, ToolMode, Connection } from "./types";
 import { COMPONENT_DEFAULTS, createDefaultData } from "./types";
 import { CanvasNodeRenderer } from "./CanvasNodeRenderer";
 import { useDroppable } from "@dnd-kit/core";
+import { ConnectionLayer } from "./ConnectionLayer";
 
 interface InfiniteCanvasProps {
   nodes: CanvasNode[];
@@ -35,6 +36,18 @@ export function InfiniteCanvas({
   const panStartRef = useRef({ x: 0, y: 0 });
   const dragRef = useRef<{ id: string; startX: number; startY: number; nodeStartX: number; nodeStartY: number } | null>(null);
   const [spaceHeld, setSpaceHeld] = useState(false);
+
+  // Add to InfiniteCanvas component state
+const [connections, setConnections] = useState<Connection[]>([]);
+const [connectionDraft, setConnectionDraft] = useState<{
+  sourceId: string;
+  sourceHandle: "top" | "right" | "bottom" | "left";
+  mouseX: number;
+  mouseY: number;
+} | null>(null);
+
+// Add connection mode to toolbar (in parent App component)
+// toolMode can now be: "select" | "draw" | "shape" | "text" | "connect" | ...
 
   // Drawing State
   const [isDrawing, setIsDrawing] = useState(false);
@@ -120,6 +133,14 @@ export function InfiniteCanvas({
     };
   }, [viewport]);
 
+// 2. ADD INTERACTION HANDLER 
+  const startConnection = useCallback((
+    sourceId: string,
+    handle: "top" | "right" | "bottom" | "left"
+  ) => {
+    setConnectionDraft({ sourceId, sourceHandle: handle, mouseX: 0, mouseY: 0 });
+  }, []);
+
   // Mouse Down
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // ... (existing mouse down logic)
@@ -199,6 +220,13 @@ export function InfiniteCanvas({
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
   const pos = getLogicPos(e);
+
+  // 3. ADD MOUSEMOVE TRACKER 
+    if (connectionDraft) {
+      const pos = getLogicPos(e);
+      setConnectionDraft({ ...connectionDraft, mouseX: pos.x, mouseY: pos.y });
+      return;
+    }
 
   // ─────────────────────────────────────────────────────────────
   // 1. DRAWING MODE (Pencil Tool)
@@ -403,8 +431,49 @@ export function InfiniteCanvas({
 
 
   // Mouse Up
-  const handleMouseUp = useCallback(() => {
+const handleMouseUp = useCallback((e: React.MouseEvent) => {
     // ... (Drawing/Shape/Box completion logic same as before)
+
+    // Update handleMouseUp to finalize connection
+if (connectionDraft) {
+  // Check if mouse is over a node (target)
+  const pos = getLogicPos(e);
+  const targetNode = nodes.find(n => {
+    const height = n.data.height || 100;
+    return pos.x >= n.x && pos.x <= n.x + n.width &&
+           pos.y >= n.y && pos.y <= n.y + height;
+  });
+  
+  if (targetNode && targetNode.id !== connectionDraft.sourceId) {
+// Smart handle detection based on relative position
+        const dx = targetNode.x - nodes.find(n => n.id === connectionDraft.sourceId)!.x;
+        const dy = targetNode.y - nodes.find(n => n.id === connectionDraft.sourceId)!.y;
+        let detectedTargetHandle: "top" | "right" | "bottom" | "left" = "left";
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+          // Horizontal bias: Check if target is to the left or right
+          detectedTargetHandle = dx > 0 ? "left" : "right";
+        } else {
+          // Vertical bias: Check if target is above or below
+          detectedTargetHandle = dy > 0 ? "top" : "bottom";
+        }
+
+        const newConnection: Connection = {
+          id: `conn-${Date.now()}`,
+          sourceId: connectionDraft.sourceId,
+          targetId: targetNode.id,
+          sourceHandle: connectionDraft.sourceHandle,
+          targetHandle: detectedTargetHandle,
+          style: "orthogonal",
+        };
+    setConnections([...connections, newConnection]);
+  }
+  
+  setConnectionDraft(null);
+  return;
+}
+
+
     if (isDrawing && currentPath.length > 2) {
       const xs = currentPath.map(p => p.x);
       const ys = currentPath.map(p => p.y);
@@ -525,7 +594,7 @@ export function InfiniteCanvas({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      {/* Background Grid */}
+{/* Background Grid */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
@@ -533,6 +602,19 @@ export function InfiniteCanvas({
           backgroundSize: `${24 * viewport.zoom}px ${24 * viewport.zoom}px`,
           backgroundPosition: `${viewport.x}px ${viewport.y}px`,
         }}
+      />
+
+      {/* Connection Layer (renders BELOW nodes so handles are clickable) */}
+      <ConnectionLayer
+        nodes={nodes}
+        connections={connections}
+        viewport={viewport}
+        onConnectionUpdate={(id, updates) => {
+          setConnections(connections.map(c => 
+            c.id === id ? { ...c, ...updates } : c
+          ));
+        }}
+        selectedConnectionId={undefined}
       />
 
       {/* Main Content Layer */}
@@ -561,7 +643,7 @@ export function InfiniteCanvas({
               }}
               onMouseDown={(e) => startNodeDrag(e, node.id)}
             >
-              <CanvasNodeRenderer
+            <CanvasNodeRenderer
                 node={node}
                 onUpdate={(data) => onNodesChange(nodes.map(n => n.id === node.id ? { ...n, data } : n))}
                 isSelected={isSelected}
@@ -570,6 +652,30 @@ export function InfiniteCanvas({
                 onDelete={() => onNodesChange(nodes.filter(n => n.id !== node.id))}
                 onDuplicate={() => {/* duplicate */ }}
               />
+
+              {/* Connection Handles (Show when node is selected or in select mode) */}
+              {isSelected && effectiveMode === "select" && (
+                <>
+                  {(["top", "right", "bottom", "left"] as const).map((pos) => {
+                    const handleClass = 
+                      pos === "top" ? "-top-1.5 left-1/2 -translate-x-1/2" :
+                      pos === "right" ? "-right-1.5 top-1/2 -translate-y-1/2" :
+                      pos === "bottom" ? "-bottom-1.5 left-1/2 -translate-x-1/2" :
+                      "-left-1.5 top-1/2 -translate-y-1/2";
+                    
+                    return (
+                      <div
+                        key={pos}
+                        className={`absolute w-3 h-3 rounded-full bg-blue-500 border-2 border-white cursor-crosshair hover:scale-125 transition-transform z-50 ${handleClass}`}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          startConnection(node.id, pos);
+                        }}
+                      />
+                    );
+                  })}
+                </>
+              )}
 
               {/* Resize Label Overlay (Optimization: Only show for resizing node) */}
               {resizeState && resizeState.id === node.id && (
@@ -624,6 +730,65 @@ export function InfiniteCanvas({
             height: Math.abs(selectionBox.h),
           }}
         />
+      )}
+
+      {/* Draft Connection Preview (while dragging) */}
+      {connectionDraft && (
+        <svg className="absolute inset-0 pointer-events-none z-30">
+          <defs>
+            <marker
+              id="draft-arrowhead"
+              markerWidth="8"
+              markerHeight="8"
+              refX="6"
+              refY="3"
+              orient="auto"
+            >
+              <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6" />
+            </marker>
+          </defs>
+          <g transform={`translate(${viewport.x}, ${viewport.y}) scale(${viewport.zoom})`}>
+            {(() => {
+              const sourceNode = nodes.find(n => n.id === connectionDraft.sourceId);
+              if (!sourceNode) return null;
+              
+              // Calculate source anchor point
+              const height = sourceNode.data.height || 100;
+              let sourceX = sourceNode.x;
+              let sourceY = sourceNode.y;
+              
+              switch (connectionDraft.sourceHandle) {
+                case "top":
+                  sourceX += sourceNode.width / 2;
+                  break;
+                case "right":
+                  sourceX += sourceNode.width;
+                  sourceY += height / 2;
+                  break;
+                case "bottom":
+                  sourceX += sourceNode.width / 2;
+                  sourceY += height;
+                  break;
+                case "left":
+                  sourceY += height / 2;
+                  break;
+              }
+              
+              return (
+                <line
+                  x1={sourceX}
+                  y1={sourceY}
+                  x2={connectionDraft.mouseX}
+                  y2={connectionDraft.mouseY}
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  strokeDasharray="5,5"
+                  markerEnd="url(#draft-arrowhead)"
+                />
+              );
+            })()}
+          </g>
+        </svg>
       )}
 
       {/* Drawing Toolbar */}

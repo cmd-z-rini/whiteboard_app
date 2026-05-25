@@ -272,3 +272,21 @@ export function createDefaultData(type: CanvasComponentType): Record<string, any
       return {};
   }
 }
+
+export interface Connection {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  sourceHandle?: "top" | "right" | "bottom" | "left";
+  targetHandle?: "top" | "right" | "bottom" | "left";
+  style?: "orthogonal" | "straight" | "curved";
+  color?: string;
+  strokeWidth?: number;
+  label?: string;
+}
+
+export interface ConnectionHandle {
+  id: string;
+  position: "top" | "right" | "bottom" | "left";
+  type: "source" | "target" | "both";
+}
