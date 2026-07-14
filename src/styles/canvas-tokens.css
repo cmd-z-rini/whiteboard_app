@@ -32,4 +32,57 @@
   --connection-color-selected: var(--primary);
   --connection-stroke-width: 2;
   --connection-stroke-width-selected: 3;
+
+  /* ----------------------------------------------------------
+     Category palette — for groupings with N distinct buckets and
+     no good/bad ordering (the Impact/Effort quadrants, domain
+     lenses). Kept apart from --success/--destructive on purpose:
+     those two carry sentiment, and a quadrant is a bucket, not a
+     verdict.
+
+     Each category is one base hue; the surface/border/text ramp
+     is derived from it, so re-hueing a category means editing one
+     hex. Hues currently match the shades they replaced.
+     ---------------------------------------------------------- */
+  --category-1: #16a34a;
+  --category-1-surface: color-mix(in srgb, var(--category-1) 8%, #fff);
+  --category-1-surface-soft: color-mix(in srgb, var(--category-1) 4%, #fff);
+  --category-1-border: color-mix(in srgb, var(--category-1) 18%, #fff);
+  --category-1-border-strong: color-mix(in srgb, var(--category-1) 32%, #fff);
+  --category-1-text: color-mix(in srgb, var(--category-1) 80%, #000);
+
+  --category-2: #3b82f6;
+  --category-2-surface: color-mix(in srgb, var(--category-2) 8%, #fff);
+  --category-2-surface-soft: color-mix(in srgb, var(--category-2) 4%, #fff);
+  --category-2-border: color-mix(in srgb, var(--category-2) 18%, #fff);
+  --category-2-border-strong: color-mix(in srgb, var(--category-2) 32%, #fff);
+  --category-2-text: color-mix(in srgb, var(--category-2) 80%, #000);
+
+  --category-3: #eab308;
+  --category-3-surface: color-mix(in srgb, var(--category-3) 8%, #fff);
+  --category-3-surface-soft: color-mix(in srgb, var(--category-3) 4%, #fff);
+  --category-3-border: color-mix(in srgb, var(--category-3) 18%, #fff);
+  --category-3-border-strong: color-mix(in srgb, var(--category-3) 32%, #fff);
+  --category-3-text: color-mix(in srgb, var(--category-3) 80%, #000);
+
+  --category-4: #ef4444;
+  --category-4-surface: color-mix(in srgb, var(--category-4) 8%, #fff);
+  --category-4-surface-soft: color-mix(in srgb, var(--category-4) 4%, #fff);
+  --category-4-border: color-mix(in srgb, var(--category-4) 18%, #fff);
+  --category-4-border-strong: color-mix(in srgb, var(--category-4) 32%, #fff);
+  --category-4-text: color-mix(in srgb, var(--category-4) 80%, #000);
+
+  --category-5: #a855f7;
+  --category-5-surface: color-mix(in srgb, var(--category-5) 8%, #fff);
+  --category-5-surface-soft: color-mix(in srgb, var(--category-5) 4%, #fff);
+  --category-5-border: color-mix(in srgb, var(--category-5) 18%, #fff);
+  --category-5-border-strong: color-mix(in srgb, var(--category-5) 32%, #fff);
+  --category-5-text: color-mix(in srgb, var(--category-5) 80%, #000);
+
+  --category-6: #f97316;
+  --category-6-surface: color-mix(in srgb, var(--category-6) 8%, #fff);
+  --category-6-surface-soft: color-mix(in srgb, var(--category-6) 4%, #fff);
+  --category-6-border: color-mix(in srgb, var(--category-6) 18%, #fff);
+  --category-6-border-strong: color-mix(in srgb, var(--category-6) 32%, #fff);
+  --category-6-text: color-mix(in srgb, var(--category-6) 80%, #000);
 }

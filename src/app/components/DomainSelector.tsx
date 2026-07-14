@@ -12,42 +12,44 @@ interface DomainOption {
   borderColor: string;
 }
 
+// Domains are a 4-way category (no good/bad ordering), so they draw from the
+// --category-* palette in canvas-tokens.css rather than sentiment tokens.
 const DOMAINS: DomainOption[] = [
   {
     id: "edtech",
     label: "EdTech",
     icon: <GraduationCap className="w-4 h-4" />,
-    color: "text-blue-600",
-    activeBg: "bg-blue-100",
-    activeText: "text-blue-800",
-    borderColor: "border-blue-300",
+    color: "text-[var(--category-2-text)]",
+    activeBg: "bg-[var(--category-2-surface)]",
+    activeText: "text-[var(--category-2-text)]",
+    borderColor: "border-[var(--category-2-border-strong)]",
   },
   {
     id: "ai-ml",
     label: "AI / ML",
     icon: <Brain className="w-4 h-4" />,
-    color: "text-purple-600",
-    activeBg: "bg-purple-100",
-    activeText: "text-purple-800",
-    borderColor: "border-purple-300",
+    color: "text-[var(--category-5-text)]",
+    activeBg: "bg-[var(--category-5-surface)]",
+    activeText: "text-[var(--category-5-text)]",
+    borderColor: "border-[var(--category-5-border-strong)]",
   },
   {
     id: "saas",
     label: "SaaS",
     icon: <Cloud className="w-4 h-4" />,
-    color: "text-green-600",
-    activeBg: "bg-green-100",
-    activeText: "text-green-800",
-    borderColor: "border-green-300",
+    color: "text-[var(--category-1-text)]",
+    activeBg: "bg-[var(--category-1-surface)]",
+    activeText: "text-[var(--category-1-text)]",
+    borderColor: "border-[var(--category-1-border-strong)]",
   },
   {
     id: "enterprise",
     label: "Enterprise",
     icon: <Building2 className="w-4 h-4" />,
-    color: "text-orange-600",
-    activeBg: "bg-orange-100",
-    activeText: "text-orange-800",
-    borderColor: "border-orange-300",
+    color: "text-[var(--category-6-text)]",
+    activeBg: "bg-[var(--category-6-surface)]",
+    activeText: "text-[var(--category-6-text)]",
+    borderColor: "border-[var(--category-6-border-strong)]",
   },
 ];
 

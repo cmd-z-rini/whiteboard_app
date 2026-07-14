@@ -47,21 +47,21 @@ function PrioritizationMatrixNode({ node }: NodeProps) {
   return (
     <div className="w-full h-full flex flex-col relative min-w-[600px] min-h-[400px]">
       <div className="absolute top-0 left-0 w-full h-full grid grid-cols-2 grid-rows-2">
-        <div className="bg-green-50/50 border-r border-b border-green-200 p-4 relative flex flex-col">
-          <span className="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">High Impact</span>
-          <span className="text-[10px] font-medium text-green-600/60 uppercase tracking-wider">Low Effort</span>
+        <div className="bg-[var(--category-1-surface-soft)] border-r border-b border-[var(--category-1-border-strong)] p-4 relative flex flex-col">
+          <span className="text-xs font-bold text-[var(--category-1-text)] uppercase tracking-wider mb-1">High Impact</span>
+          <span className="text-[10px] font-medium text-[var(--category-1-text)]/60 uppercase tracking-wider">Low Effort</span>
         </div>
-        <div className="bg-blue-50/50 border-b border-blue-200 p-4 relative flex flex-col">
-          <span className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">High Impact</span>
-          <span className="text-[10px] font-medium text-blue-600/60 uppercase tracking-wider">High Effort</span>
+        <div className="bg-[var(--category-2-surface-soft)] border-b border-[var(--category-2-border-strong)] p-4 relative flex flex-col">
+          <span className="text-xs font-bold text-[var(--category-2-text)] uppercase tracking-wider mb-1">High Impact</span>
+          <span className="text-[10px] font-medium text-[var(--category-2-text)]/60 uppercase tracking-wider">High Effort</span>
         </div>
-        <div className="bg-yellow-50/50 border-r border-yellow-200 p-4 relative flex flex-col">
-          <span className="text-xs font-bold text-yellow-700 uppercase tracking-wider mb-1">Low Impact</span>
-          <span className="text-[10px] font-medium text-yellow-600/60 uppercase tracking-wider">Low Effort</span>
+        <div className="bg-[var(--category-3-surface-soft)] border-r border-[var(--category-3-border-strong)] p-4 relative flex flex-col">
+          <span className="text-xs font-bold text-[var(--category-3-text)] uppercase tracking-wider mb-1">Low Impact</span>
+          <span className="text-[10px] font-medium text-[var(--category-3-text)]/60 uppercase tracking-wider">Low Effort</span>
         </div>
-        <div className="bg-red-50/50 p-4 relative flex flex-col">
-          <span className="text-xs font-bold text-red-700 uppercase tracking-wider mb-1">Low Impact</span>
-          <span className="text-[10px] font-medium text-red-600/60 uppercase tracking-wider">High Effort</span>
+        <div className="bg-[var(--category-4-surface-soft)] p-4 relative flex flex-col">
+          <span className="text-xs font-bold text-[var(--category-4-text)] uppercase tracking-wider mb-1">Low Impact</span>
+          <span className="text-[10px] font-medium text-[var(--category-4-text)]/60 uppercase tracking-wider">High Effort</span>
         </div>
       </div>
       {/* Background component, nodes are placed on top via canvas z-index/positioning naturally */}
@@ -260,7 +260,7 @@ function StandardCardWrapper({ children, node, isSelected, onStartDrag, onDelete
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-            className="p-1 rounded hover:bg-red-50 text-muted-foreground/40 hover:text-red-500 transition-colors"
+            className="p-1 rounded hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive transition-colors"
             title="Delete"
           >
             <X className="w-3 h-3" />
@@ -700,7 +700,7 @@ function HmwCardNode({ node, onUpdate }: NodeProps) {
             {items.length > 1 && (
               <button
                 onClick={() => removeItem(item.id)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-red-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -751,26 +751,26 @@ function PersonaCardNode({ node, onUpdate }: NodeProps) {
       <InlineEdit value={d.bio} onChange={(v) => onUpdate({ ...d, bio: v })} className="text-[14px] bg-secondary/30 rounded-xl mb-4 p-3 leading-relaxed" multiline placeholder="Bio..." />
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <h4 className="text-[12px] text-green-600 tracking-wider uppercase mb-2 font-bold">Goals</h4>
+          <h4 className="text-[12px] text-success tracking-wider uppercase mb-2 font-bold">Goals</h4>
           {d.goals.map((g: string, i: number) => (
             <div key={i} className="flex items-start gap-1.5 mb-1 group/gi">
-              <span className="text-green-500 text-[14px] mt-0.5">+</span>
+              <span className="text-success/80 text-[14px] mt-0.5">+</span>
               <input value={g} onChange={(e) => updateList("goals", i, e.target.value)} className="bg-transparent focus:outline-none text-[14px] flex-1 min-w-0" onMouseDown={(e) => e.stopPropagation()} />
-              <button onClick={() => removeFromList("goals", i)} className="opacity-0 group-hover/gi:opacity-100 text-muted-foreground/40 hover:text-red-500 p-1"><X className="w-4 h-4" /></button>
+              <button onClick={() => removeFromList("goals", i)} className="opacity-0 group-hover/gi:opacity-100 text-muted-foreground/40 hover:text-destructive p-1"><X className="w-4 h-4" /></button>
             </div>
           ))}
-          <button onClick={() => addToList("goals")} className="text-[12px] text-muted-foreground hover:text-green-600 flex items-center gap-1 mt-2 px-1 py-0.5 rounded hover:bg-green-50"><Plus className="w-3.5 h-3.5" />Add</button>
+          <button onClick={() => addToList("goals")} className="text-[12px] text-muted-foreground hover:text-success flex items-center gap-1 mt-2 px-1 py-0.5 rounded hover:bg-success/10"><Plus className="w-3.5 h-3.5" />Add</button>
         </div>
         <div>
-          <h4 className="text-[12px] text-red-500 tracking-wider uppercase mb-2 font-bold">Pain Points</h4>
+          <h4 className="text-[12px] text-destructive tracking-wider uppercase mb-2 font-bold">Pain Points</h4>
           {d.painPoints.map((p: string, i: number) => (
             <div key={i} className="flex items-start gap-1.5 mb-1 group/pi">
-              <span className="text-red-400 text-[14px] mt-0.5">-</span>
+              <span className="text-destructive/70 text-[14px] mt-0.5">-</span>
               <input value={p} onChange={(e) => updateList("painPoints", i, e.target.value)} className="bg-transparent focus:outline-none text-[14px] flex-1 min-w-0" onMouseDown={(e) => e.stopPropagation()} />
-              <button onClick={() => removeFromList("painPoints", i)} className="opacity-0 group-hover/pi:opacity-100 text-muted-foreground/40 hover:text-red-500 p-1"><X className="w-4 h-4" /></button>
+              <button onClick={() => removeFromList("painPoints", i)} className="opacity-0 group-hover/pi:opacity-100 text-muted-foreground/40 hover:text-destructive p-1"><X className="w-4 h-4" /></button>
             </div>
           ))}
-          <button onClick={() => addToList("painPoints")} className="text-[12px] text-muted-foreground hover:text-red-500 flex items-center gap-1 mt-2 px-1 py-0.5 rounded hover:bg-red-50"><Plus className="w-3.5 h-3.5" />Add</button>
+          <button onClick={() => addToList("painPoints")} className="text-[12px] text-muted-foreground hover:text-destructive flex items-center gap-1 mt-2 px-1 py-0.5 rounded hover:bg-destructive/10"><Plus className="w-3.5 h-3.5" />Add</button>
         </div>
       </div>
     </div>
@@ -813,9 +813,9 @@ function UserFlowNode({ node, onUpdate }: NodeProps) {
       <div className="flex items-center gap-2 flex-wrap py-2">
         {steps.map((step, i) => (
           <div key={step.id} className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full border text-[12px] font-medium ${step.flag === "pain" ? "bg-red-50 border-red-200" :
-              step.flag === "opportunity" ? "bg-emerald-50 border-emerald-200" :
-                "bg-gray-50 border-gray-200"
+            <span className={`px-3 py-1 rounded-full border text-[12px] font-medium ${step.flag === "pain" ? "bg-destructive/5 border-destructive/20" :
+              step.flag === "opportunity" ? "bg-success/5 border-success/20" :
+                "bg-secondary border-border"
               }`}>{step.label}</span>
             {i < steps.length - 1 && <ArrowRight className="w-4 h-4 text-muted-foreground/30" />}
           </div>
@@ -824,12 +824,12 @@ function UserFlowNode({ node, onUpdate }: NodeProps) {
 
       {/* Step list */}
       {steps.map((step, i) => (
-        <div key={step.id} className={`flex items-center gap-3 rounded-xl p-3 border text-[14px] ${step.flag === "pain" ? "bg-red-50/50 border-red-200" :
-          step.flag === "opportunity" ? "bg-emerald-50/50 border-emerald-200" :
+        <div key={step.id} className={`flex items-center gap-3 rounded-xl p-3 border text-[14px] ${step.flag === "pain" ? "bg-destructive/5 border-destructive/20" :
+          step.flag === "opportunity" ? "bg-success/5 border-success/20" :
             "bg-white border-border"
           } group/fs`}>
-          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] border shrink-0 font-medium ${step.flag === "pain" ? "bg-red-100 border-red-200 text-red-700" :
-            step.flag === "opportunity" ? "bg-emerald-100 border-emerald-200 text-emerald-700" :
+          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] border shrink-0 font-medium ${step.flag === "pain" ? "bg-destructive/10 border-destructive/20 text-destructive" :
+            step.flag === "opportunity" ? "bg-success/10 border-success/20 text-success" :
               "bg-secondary border-border text-muted-foreground"
             }`}>{i + 1}</span>
           <input value={step.label} onChange={(e) => updateStep(step.id, "label", e.target.value)}
@@ -839,11 +839,11 @@ function UserFlowNode({ node, onUpdate }: NodeProps) {
           <div className="flex gap-1 opacity-0 group-hover/fs:opacity-100 transition-opacity">
             <button onClick={() => cycleFlag(step.id)} className="p-1.5 rounded hover:bg-secondary" title="Toggle flag">
               {step.flag === "none" ? <AlertTriangle className="w-4 h-4 text-muted-foreground/40" /> :
-                step.flag === "pain" ? <AlertTriangle className="w-4 h-4 text-red-500" /> :
-                  <Zap className="w-4 h-4 text-emerald-600" />}
+                step.flag === "pain" ? <AlertTriangle className="w-4 h-4 text-destructive" /> :
+                  <Zap className="w-4 h-4 text-success" />}
             </button>
             {steps.length > 2 && (
-              <button onClick={() => removeStep(step.id)} className="p-1.5 rounded hover:bg-red-50 hover:text-red-500 text-muted-foreground/40">
+              <button onClick={() => removeStep(step.id)} className="p-1.5 rounded hover:bg-destructive/10 hover:text-destructive text-muted-foreground/40">
                 <X className="w-4 h-4" />
               </button>
             )}
@@ -891,7 +891,7 @@ function ChecklistNode({ node, onUpdate }: NodeProps) {
           <input value={item.text} onChange={(e) => updateText(item.id, e.target.value)}
             className={`bg-transparent focus:outline-none text-[15px] flex-1 ${item.checked ? "line-through text-muted-foreground" : ""}`}
             placeholder="Item..." onMouseDown={(e) => e.stopPropagation()} />
-          <button onClick={() => remove(item.id)} className="opacity-0 group-hover/ci:opacity-100 text-muted-foreground/40 hover:text-red-500 p-1">
+          <button onClick={() => remove(item.id)} className="opacity-0 group-hover/ci:opacity-100 text-muted-foreground/40 hover:text-destructive p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -908,10 +908,10 @@ function ChecklistNode({ node, onUpdate }: NodeProps) {
 function MatrixNode({ node, onUpdate }: NodeProps) {
   const d = node.data;
   const quadrants = [
-    { key: "topLeft", label: "High Impact / Low Effort", bg: "bg-green-50", border: "border-green-100", pill: "bg-green-100 text-green-700" },
-    { key: "topRight", label: "High Impact / High Effort", bg: "bg-blue-50", border: "border-blue-100", pill: "bg-blue-100 text-blue-700" },
-    { key: "bottomLeft", label: "Low Impact / Low Effort", bg: "bg-yellow-50", border: "border-yellow-100", pill: "bg-yellow-100 text-yellow-700" },
-    { key: "bottomRight", label: "Low Impact / High Effort", bg: "bg-red-50", border: "border-red-100", pill: "bg-red-100 text-red-700" },
+    { key: "topLeft", label: "High Impact / Low Effort", bg: "bg-[var(--category-1-surface)]", border: "border-[var(--category-1-border)]", text: "text-[var(--category-1-text)]" },
+    { key: "topRight", label: "High Impact / High Effort", bg: "bg-[var(--category-2-surface)]", border: "border-[var(--category-2-border)]", text: "text-[var(--category-2-text)]" },
+    { key: "bottomLeft", label: "Low Impact / Low Effort", bg: "bg-[var(--category-3-surface)]", border: "border-[var(--category-3-border)]", text: "text-[var(--category-3-text)]" },
+    { key: "bottomRight", label: "Low Impact / High Effort", bg: "bg-[var(--category-4-surface)]", border: "border-[var(--category-4-border)]", text: "text-[var(--category-4-text)]" },
   ];
 
   const items = d.items || []; // Array of { id, text, quadrant }
@@ -943,7 +943,7 @@ function MatrixNode({ node, onUpdate }: NodeProps) {
       <div className="grid grid-cols-2 gap-3 h-full">
         {quadrants.map((q) => (
           <div key={q.key} className={`${q.bg} ${q.border} border rounded-2xl p-4 flex flex-col min-h-[200px]`}>
-            <div className={`text-[11px] font-bold uppercase tracking-wider mb-3 ${q.pill.split(" ")[1]}`}>{q.label}</div>
+            <div className={`text-[11px] font-bold uppercase tracking-wider mb-3 ${q.text}`}>{q.label}</div>
             <div className="flex-1 space-y-3">
               {items.filter((i: any) => i.quadrant === q.key).map((item: any) => (
                 <div key={item.id} className="group relative">
@@ -957,7 +957,7 @@ function MatrixNode({ node, onUpdate }: NodeProps) {
                   />
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 bg-white rounded-full p-1 border shadow-sm text-muted-foreground hover:text-red-500"
+                    className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 bg-white rounded-full p-1 border shadow-sm text-muted-foreground hover:text-destructive"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
