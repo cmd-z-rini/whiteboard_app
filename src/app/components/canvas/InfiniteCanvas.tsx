@@ -587,8 +587,8 @@ if (connectionDraft) {
         containerRef.current = node;
         setDroppableRef(node);
       }}
-      className="flex-1 w-full h-full min-h-screen overflow-hidden relative bg-[#f8f8fa]"
-      style={{ cursor }}
+      className="flex-1 w-full h-full min-h-screen overflow-hidden relative"
+      style={{ cursor, backgroundColor: "var(--canvas-bg)" }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -598,7 +598,7 @@ if (connectionDraft) {
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
-          backgroundImage: `radial-gradient(#d1d5db 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(var(--canvas-grid-dot) 1px, transparent 1px)`,
           backgroundSize: `${24 * viewport.zoom}px ${24 * viewport.zoom}px`,
           backgroundPosition: `${viewport.x}px ${viewport.y}px`,
         }}

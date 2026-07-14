@@ -81,7 +81,7 @@ export function CanvasToolbar({
         {/* LEFT: Logo & Title */}
         <div className="flex items-center gap-4 min-w-fit">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-sm shadow-primary/20">
               <span className="font-bold text-lg">W</span>
             </div>
             <h1 className="font-bold text-sm text-slate-800 leading-tight">Whiteboard Helper</h1>
@@ -116,7 +116,7 @@ export function CanvasToolbar({
             </span>
             <button
               onClick={() => setTimerRunning(!timerRunning)}
-              className={`text-[11px] px-2 py-0.5 rounded ${timerRunning ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
+              className={`text-[11px] px-2 py-0.5 rounded ${timerRunning ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}
             >
               {timerRunning ? "Stop" : "Start"}
             </button>
@@ -125,7 +125,7 @@ export function CanvasToolbar({
       </header>
 
       {/* Floating Bottom Toolbar */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-xl border border-gray-200 px-6 py-3 flex items-center gap-4 z-50">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-xl border border-border px-6 py-3 flex items-center gap-4 z-50">
         <div className="flex items-center gap-1">
           {[
             { mode: "select", icon: <MousePointer2 className="w-5 h-5" />, label: "Select", shortcut: "V" },

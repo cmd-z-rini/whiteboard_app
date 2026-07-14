@@ -238,7 +238,7 @@ export interface NodeProps {
 function StandardCardWrapper({ children, node, isSelected, onStartDrag, onDelete, onDuplicate }: { children: React.ReactNode } & NodeProps) {
   const defaults = COMPONENT_DEFAULTS[node.type] || { label: "Component", emoji: "🧩" };
   return (
-    <div className={`bg-white rounded-xl shadow-sm border-2 transition-shadow hover:shadow-md h-full flex flex-col ${isSelected ? "border-blue-500 shadow-blue-100" : "border-transparent hover:border-border"}`}>
+    <div className={`bg-white rounded-xl shadow-sm border-2 transition-shadow hover:shadow-md h-full flex flex-col ${isSelected ? "border-primary shadow-primary/10" : "border-transparent hover:border-border"}`}>
       {/* Drag handle */}
       <div
         className="flex items-center justify-between px-3 py-1.5 cursor-grab active:cursor-grabbing border-b border-border/50 rounded-t-xl bg-secondary/20"
@@ -338,11 +338,11 @@ interface SelectionOverlayProps {
 function SelectionOverlay({ isSelected, onResizeStart, width, height }: SelectionOverlayProps) {
   if (!isSelected) return null;
 
-  const handleStyle = "absolute w-3 h-3 bg-white border border-blue-500 z-50";
+  const handleStyle = "absolute w-3 h-3 bg-white border border-primary z-50";
 
   return (
     <>
-      <div className="absolute inset-0 border border-blue-500 pointer-events-none" />
+      <div className="absolute inset-0 border border-primary pointer-events-none" />
 
       {/* Dimension Label (While resizing, but we don't have isResizing state here easily without prop drill. 
           For now, show it if selected and width/height is available? Or just relies on user drag) 
@@ -375,7 +375,7 @@ function SelectionOverlay({ isSelected, onResizeStart, width, height }: Selectio
 
       {/* Dimension Label (Static for now if needed, or we render it from parent) */}
       {(width && height) && (
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
           {Math.round(width)} × {Math.round(height)}
         </div>
       )}
@@ -432,7 +432,7 @@ function PencilNode({ node, isSelected }: NodeProps) {
         />
       </svg>
       {isSelected && (
-        <div className="absolute inset-0 border-2 border-blue-500 border-dashed pointer-events-none opacity-50" />
+        <div className="absolute inset-0 border-2 border-primary border-dashed pointer-events-none opacity-50" />
       )}
     </div>
   );

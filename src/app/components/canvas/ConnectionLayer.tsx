@@ -174,7 +174,7 @@ export function ConnectionLayer({
       return {
         id: conn.id,
         path: pathString,
-        color: conn.color || "#64748b",
+        color: conn.color || "var(--connection-color)",
         strokeWidth: conn.strokeWidth || 2,
         label: conn.label,
         targetPoint, // For arrow head
@@ -228,12 +228,12 @@ export function ConnectionLayer({
               {/* Visible Path */}
               <path
                 d={data.path}
-                stroke={isSelected ? "#3b82f6" : data.color}
+                stroke={isSelected ? "var(--connection-color-selected)" : data.color}
                 strokeWidth={isSelected ? data.strokeWidth + 1 : data.strokeWidth}
                 fill="none"
                 markerEnd="url(#arrowhead)"
                 className="pointer-events-none"
-                style={{ color: isSelected ? "#3b82f6" : data.color }}
+                style={{ color: isSelected ? "var(--connection-color-selected)" : data.color }}
               />
 
               {/* Connection Label */}

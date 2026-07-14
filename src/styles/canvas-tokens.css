@@ -1,0 +1,35 @@
+/* ============================================================
+   Canvas Tokens
+   ------------------------------------------------------------
+   Whiteboard-SURFACE-specific tokens: grid, node elevation,
+   selection glow, connection lines. These are intentionally
+   separate from theme.css (UI chrome: toolbar/sidebar/modals) —
+   Miro/FigJam keep the canvas itself quieter than the chrome so
+   user content is what pops, not the app shell.
+
+   Import this AFTER theme.css so --primary is already defined.
+   ============================================================ */
+
+:root {
+  /* Canvas surface */
+  --canvas-bg: #fafafa;
+  --canvas-grid-dot: #d8d8dc;
+  --canvas-grid-spacing: 24px;
+
+  /* Node elevation states (replaces ad-hoc shadow-sm/shadow-md/shadow-2xl mixing) */
+  --node-radius: 10px;
+  --node-shadow-rest: 0 1px 2px rgba(15, 15, 20, 0.05), 0 1px 1px rgba(15, 15, 20, 0.04);
+  --node-shadow-hover: 0 3px 8px rgba(15, 15, 20, 0.08), 0 1px 2px rgba(15, 15, 20, 0.05);
+  --node-shadow-dragging: 0 10px 28px rgba(15, 15, 20, 0.18), 0 3px 8px rgba(15, 15, 20, 0.08);
+
+  /* Selection — shares the ONE accent with UI chrome (--primary), not a separate blue-500 */
+  --color-selection: var(--primary);
+  --color-selection-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+  --node-shadow-selected: 0 0 0 2px var(--color-selection), 0 4px 12px rgba(15, 15, 20, 0.08);
+
+  /* Connections */
+  --connection-color: #94a3b8;
+  --connection-color-selected: var(--primary);
+  --connection-stroke-width: 2;
+  --connection-stroke-width-selected: 3;
+}
