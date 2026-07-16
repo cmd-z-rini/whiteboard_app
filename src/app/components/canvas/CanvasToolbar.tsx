@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   MousePointer2,
   Hand,
@@ -8,13 +7,16 @@ import {
   Maximize,
   Clock,
   Undo2,
+  Redo2,
   Trash2,
   Type,
   Square,
   ChevronDown,
+  Play,
 } from "lucide-react";
 import type { ToolMode, CanvasViewport } from "./types";
 import { DomainSelector, type Domain } from "../DomainSelector";
+import * as Button from "../ui/alignui/button";
 
 interface CanvasToolbarProps {
   toolMode: ToolMode;
@@ -31,6 +33,19 @@ interface CanvasToolbarProps {
   onExport: () => void;
   selectedColor?: string;
   onColorChange?: (color: string) => void;
+  // Timer state is owned by App so Session Mode can reset + start it on launch.
+  timerSeconds: number;
+  timerRunning: boolean;
+  onToggleTimer: () => void;
+  // Session Mode
+  sessionActive: boolean;
+  onStartSession: () => void;
+  onEndSession: () => void;
+  // Undo / redo
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export function CanvasToolbar({
@@ -48,20 +63,17 @@ export function CanvasToolbar({
   onExport,
   selectedColor,
   onColorChange,
+  timerSeconds,
+  timerRunning,
+  onToggleTimer,
+  sessionActive,
+  onStartSession,
+  onEndSession,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }: CanvasToolbarProps) {
-  const [timer, setTimer] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
-
-  useEffect(() => {
-    let interval: number | undefined;
-    if (timerRunning) {
-      interval = window.setInterval(() => setTimer((t) => t + 1), 1000);
-    }
-    return () => {
-      if (interval) window.clearInterval(interval);
-    };
-  }, [timerRunning]);
-
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -77,14 +89,42 @@ export function CanvasToolbar({
   return (
     <>
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white w-full shrink-0 z-50 h-16">
+      <header className="flex items-center justify-between px-6 py-3 border-b border-border bg-background w-full shrink-0 z-50 h-16">
         {/* LEFT: Logo & Title */}
         <div className="flex items-center gap-4 min-w-fit">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-sm shadow-primary/20">
-              <span className="font-bold text-lg">W</span>
+              <span className="font-bold text-lg">P</span>
             </div>
-            <h1 className="font-bold text-sm text-slate-800 leading-tight">Whiteboard Helper</h1>
+            <h1 className="font-extrabold text-lg text-foreground leading-none tracking-tight select-none">
+              Prep<span className="text-primary">Slate</span>
+            </h1>
+          </div>
+
+          <div className="h-6 w-px bg-border/60" />
+
+          {/* Undo / redo */}
+          <div className="flex items-center gap-1">
+            <Button.Root
+              variant="neutral"
+              mode="ghost"
+              size="xxsmall"
+              onClick={onUndo}
+              disabled={!canUndo}
+              title="Undo (⌘Z)"
+            >
+              <Button.Icon as={Undo2} />
+            </Button.Root>
+            <Button.Root
+              variant="neutral"
+              mode="ghost"
+              size="xxsmall"
+              onClick={onRedo}
+              disabled={!canRedo}
+              title="Redo (⌘⇧Z)"
+            >
+              <Button.Icon as={Redo2} />
+            </Button.Root>
           </div>
         </div>
 
@@ -96,27 +136,41 @@ export function CanvasToolbar({
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1">
-            <button onClick={onZoomOut} className="w-7 h-7 rounded-md hover:bg-secondary flex items-center justify-center"><ZoomOut className="w-3.5 h-3.5" /></button>
-            <span className="text-[12px] font-mono w-10 text-center">{Math.round(viewport.zoom * 100)}%</span>
-            <button onClick={onZoomIn} className="w-7 h-7 rounded-md hover:bg-secondary flex items-center justify-center"><ZoomIn className="w-3.5 h-3.5" /></button>
+            <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={onZoomOut} title="Zoom out">
+              <Button.Icon as={ZoomOut} />
+            </Button.Root>
+            <span className="text-sm font-mono w-10 text-center">{Math.round(viewport.zoom * 100)}%</span>
+            <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={onZoomIn} title="Zoom in">
+              <Button.Icon as={ZoomIn} />
+            </Button.Root>
           </div>
 
-          <button
-            onClick={onExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-[12px] hover:bg-primary/90 transition-all font-medium shadow-sm whitespace-nowrap"
-          >
+          <Button.Root variant="primary" mode="filled" size="xsmall" onClick={onExport}>
             Export
-          </button>
+          </Button.Root>
+
+          {/* Session Mode start/end */}
+          {sessionActive ? (
+            <Button.Root variant="error" mode="filled" size="xsmall" onClick={onEndSession}>
+              <Button.Icon as={Square} className="fill-current" />
+              End session
+            </Button.Root>
+          ) : (
+            <Button.Root variant="neutral" mode="stroke" size="xsmall" onClick={onStartSession}>
+              <Button.Icon as={Play} />
+              Start session
+            </Button.Root>
+          )}
 
           {/* Timer */}
           <div className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-1.5 whitespace-nowrap">
             <Clock className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-sm font-medium font-mono">
-              {formatTime(timer)}
+              {formatTime(timerSeconds)}
             </span>
             <button
-              onClick={() => setTimerRunning(!timerRunning)}
-              className={`text-[11px] px-2 py-0.5 rounded ${timerRunning ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}
+              onClick={onToggleTimer}
+              className={`text-xs px-2 py-0.5 rounded ${timerRunning ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}
             >
               {timerRunning ? "Stop" : "Start"}
             </button>
@@ -125,7 +179,7 @@ export function CanvasToolbar({
       </header>
 
       {/* Floating Bottom Toolbar */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-xl border border-border px-6 py-3 flex items-center gap-4 z-50">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-background rounded-full shadow-xl border border-border px-6 py-3 flex items-center gap-4 z-50">
         <div className="flex items-center gap-1">
           {[
             { mode: "select", icon: <MousePointer2 className="w-5 h-5" />, label: "Select", shortcut: "V" },
@@ -140,7 +194,7 @@ export function CanvasToolbar({
               onClick={() => onToolModeChange(t.mode as any)}
               className={`p-2 rounded-lg transition-all ${toolMode === t.mode
                 ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-gray-100"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
               title={`${t.label} (${t.shortcut})`}
             >
@@ -149,7 +203,7 @@ export function CanvasToolbar({
           ))}
         </div>
 
-        <div className="h-8 w-px bg-gray-200" />
+        <div className="h-8 w-px bg-border" />
 
         <div className="flex items-center gap-2">
           {["bg-blue-500", "bg-red-500", "bg-green-500", "bg-yellow-500", "bg-black"].map(c => (

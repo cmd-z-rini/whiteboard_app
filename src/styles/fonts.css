@@ -1,0 +1,26 @@
+/* ============================================================
+   Fonts — Inter, self-hosted (no Google Fonts CDN call)
+   ------------------------------------------------------------
+   Variable weight axis only (100–900) via @fontsource-variable.
+   Family registered by the package as "Inter Variable".
+   Imported FIRST in index.css so --font-sans (theme.css) can
+   reference it and every layer below inherits it.
+   ============================================================ */
+
+@import '@fontsource-variable/inter/wght.css';
+
+:root {
+  /* One canonical sans stack for the whole app. */
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+html {
+  font-family: var(--font-sans);
+  /* Stripe/Untitled-UI feel: tighter kerning, contextual alternates,
+     tabular figures so numbers in cards/metrics don't jitter. */
+  font-feature-settings: 'cv11', 'ss01', 'tnum';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}

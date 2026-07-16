@@ -11,6 +11,33 @@
    ============================================================ */
 
 :root {
+  /* ----------------------------------------------------------
+     Spacing & radius scale — the ONE 4px-based ramp for canvas
+     content. Components must use Tailwind's matching utilities,
+     never an arbitrary p-[26px]/gap-[18px]:
+
+       1 = 4px    2 = 8px    3 = 12px    4 = 16px
+       5 = 20px   6 = 24px   8 = 32px
+
+     Radius ladder (restrained, Stripe-ish — nothing rounder than
+     a card needs): pill/handle → --node-radius → frame.
+     ---------------------------------------------------------- */
+  --radius-node-sm: 6px;    /* inner chips, pills, inputs */
+  --radius-node: 10px;      /* standard card / node body */
+  --radius-node-lg: 14px;   /* frames, large containers */
+
+  /* Neutral content surfaces — the quiet base every card/section
+     sits on, so nodes read as one family instead of each picking a
+     random slate or white. Sections nest surface then surface-subtle. */
+  --surface: #ffffff;
+  --surface-subtle: #fafafb;
+  --surface-muted: #f4f4f6;
+  --surface-border: rgba(15, 15, 20, 0.08);
+  --surface-border-strong: rgba(15, 15, 20, 0.12);
+  --text-strong: #1a1a20;
+  --text-muted: #71717a;
+  --text-faint: #a1a1aa;
+
   /* Canvas surface */
   --canvas-bg: #fafafa;
   --canvas-grid-dot: #d8d8dc;

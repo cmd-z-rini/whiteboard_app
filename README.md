@@ -1,5 +1,5 @@
 
-# Whiteboard Helper 🖍️
+# PrepSlate 🖍️
 
 > A specialized, infinite-canvas whiteboarding tool designed specifically for Product Design and PM interview prep. Built as an experiment in AI-assisted development.
 

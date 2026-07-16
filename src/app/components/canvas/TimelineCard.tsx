@@ -79,11 +79,11 @@ export function TimelineCardNode({ node, onUpdate }: NodeProps) {
         <InlineEdit
           value={d.title || "Project Timeline"}
           onChange={(v) => onUpdate({ ...d, title: v })}
-          className="font-medium text-[14px]"
+          className="font-medium text-base"
         />
         <button
           onClick={addStep}
-          className="text-[10px] flex items-center gap-1 bg-secondary hover:bg-secondary/80 px-2 py-1 rounded text-muted-foreground transition-colors"
+          className="text-xs flex items-center gap-1 bg-secondary hover:bg-secondary/80 px-2 py-1 rounded text-muted-foreground transition-colors"
         >
           <Plus className="w-3 h-3" /> Add Step
         </button>
@@ -100,23 +100,23 @@ export function TimelineCardNode({ node, onUpdate }: NodeProps) {
               <div className="w-3 h-3 rounded-full bg-primary border-2 border-white shadow-sm mb-2 z-10" />
 
               {/* Content */}
-              <div className="w-full bg-white border border-border rounded-lg p-2 shadow-sm text-center">
+              <div className="w-full bg-surface border border-border rounded-lg p-2 shadow-sm text-center">
                 <InlineEdit
                   value={step.date}
                   onChange={(v) => updateStep(step.id, "date", v)}
-                  className="text-[10px] text-muted-foreground mb-1 justify-center flex"
+                  className="text-xs text-muted-foreground mb-1 justify-center flex"
                   placeholder="Date"
                 />
                 <InlineEdit
                   value={step.title}
                   onChange={(v) => updateStep(step.id, "title", v)}
-                  className="text-[12px] font-medium mb-1 justify-center flex"
+                  className="text-sm font-medium mb-1 justify-center flex"
                   placeholder="Milestone"
                 />
                 <textarea
                   value={step.description}
                   onChange={(e) => updateStep(step.id, "description", e.target.value)}
-                  className="w-full text-[10px] resize-none bg-transparent focus:outline-none text-center h-12"
+                  className="w-full text-xs resize-none bg-transparent focus:outline-none text-center h-12"
                   placeholder="Details..."
                   onMouseDown={(e) => e.stopPropagation()}
                 />
@@ -125,7 +125,7 @@ export function TimelineCardNode({ node, onUpdate }: NodeProps) {
               {/* Remove button */}
               <button
                 onClick={() => removeStep(step.id)}
-                className="absolute -top-1 -right-1 p-0.5 rounded-full bg-white shadow border border-border opacity-0 group-hover/step:opacity-100 transition-opacity hover:text-red-500"
+                className="absolute -top-1 -right-1 p-0.5 rounded-full bg-surface shadow border border-border opacity-0 group-hover/step:opacity-100 transition-opacity text-muted-foreground/50 hover:text-destructive"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -138,7 +138,7 @@ export function TimelineCardNode({ node, onUpdate }: NodeProps) {
           ))}
 
           {steps.length === 0 && (
-            <div className="w-full text-center text-[11px] text-muted-foreground/50 py-4 italic">
+            <div className="w-full text-center text-xs text-muted-foreground/50 py-4 italic">
               Add a step to start the timeline
             </div>
           )}
