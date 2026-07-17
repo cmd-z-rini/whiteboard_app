@@ -38,6 +38,7 @@ export type CanvasComponentType =
   | "pencil"
   // Session Mode — 7-phase interview prep framework
   | "brief-interrogation"
+  | "brief-interrogation-guided"
   | "working-assumption"
   | "timeline-row"
   | "moment-of-truth"
@@ -220,6 +221,7 @@ export const COMPONENT_DEFAULTS: Record<
   // ─── Session Mode (7-phase interview prep framework) ──────────────
   // Phase 01–02 — Interrogate the brief / diagnose the person
   "brief-interrogation": { width: 560, label: "Brief Interrogation", emoji: "🔍", category: "Empathize & Analyze" },
+  "brief-interrogation-guided": { width: 560, label: "Brief Interrogation (Guided)", emoji: "🧭", category: "Empathize & Analyze" },
   "working-assumption": { width: 420, label: "Working Assumption", emoji: "🧪", category: "Empathize & Analyze" },
   "timeline-row": { width: 800, label: "Timeline Row", emoji: "🛤️", category: "Empathize & Analyze" },
   "moment-of-truth": { width: 380, label: "Moment of Truth", emoji: "⭐", category: "Empathize & Analyze" },
@@ -487,7 +489,26 @@ export function createDefaultData(type: CanvasComponentType): Record<string, any
         what_is_NOT_asked: "A one-off trip planner or a maps replacement.",
         constraints: ["Mobile-first", "Works offline on the platform", "Launch in one quarter"],
         success_looks_like: "Commuters plan tomorrow's trip in under 30 seconds.",
-        height: 420,
+        customQuestions: [],
+        height: 520,
+      };
+    case "brief-interrogation-guided":
+      // Guided sibling of `brief-interrogation`. The brief is pre-filled as the
+      // given; the four answer fields start empty on purpose — the point is for
+      // the user to fill them, coached by the per-field why/example lines (and,
+      // later, the on-blur quality nudge). selfChecks drive the closing strip.
+      return {
+        prompt: "Design a feature to help commuters plan their daily journey.",
+        what_is_asked: "",
+        what_is_NOT_asked: "",
+        constraints: [""],
+        success_looks_like: "",
+        selfChecks: [
+          { id: "sc1", label: "Every answer is specific — I'm not just restating the brief.", done: false },
+          { id: "sc2", label: "I can name at least one thing that is NOT being asked.", done: false },
+          { id: "sc3", label: "Success is observable — a number or a concrete moment.", done: false },
+        ],
+        height: 640,
       };
     case "working-assumption":
       return {

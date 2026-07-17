@@ -17,7 +17,10 @@ export const alertVariants = tv({
   slots: {
     root: 'w-full',
     wrapper: [
-      'grid w-full auto-cols-auto grid-flow-col grid-cols-1 items-start has-[>svg:first-child]:grid-cols-[auto,minmax(0,1fr)]',
+      // grid-cols track list must be space-separated; the comma form emits invalid CSS
+      // (grid-template-columns:auto,minmax(...)) that the browser drops, collapsing the
+      // 2-col [icon | text] layout to one column and stranding the text on the right.
+      'grid w-full auto-cols-auto grid-flow-col grid-cols-1 items-start has-[>svg:first-child]:grid-cols-[auto_minmax(0,1fr)]',
       'transition duration-200 ease-out group-data-[expanded=false]/toast:group-data-[front=false]/toast:opacity-0',
     ],
     icon: 'shrink-0',
@@ -65,7 +68,9 @@ export const alertVariants = tv({
       large: {
         root: 'rounded-xl p-3.5 pb-4 text-paragraph-sm',
         wrapper: 'items-start gap-3',
-        icon: 'size-5',
+        // -mt-px seats the round 20px glyph optically on the title's cap-line in the
+        // two-line (items-start) layout, where it otherwise reads slightly bottom-heavy
+        icon: 'size-5 -mt-px',
         closeIcon: 'size-5',
       },
     },
@@ -76,21 +81,24 @@ export const alertVariants = tv({
       variant: 'filled',
       status: 'error',
       class: {
-        root: 'bg-error-base',
+        // WCAG AA: white-on-error-base (red-500) is 3.66:1 (< 4.5 for 14px text); -dark (red-950) → 12.43:1
+        root: 'bg-error-dark',
       },
     },
     {
       variant: 'filled',
       status: 'warning',
       class: {
-        root: 'bg-warning-base',
+        // WCAG AA: white-on-warning-base (orange-500) is 2.79:1; -dark (orange-950) → 9.63:1
+        root: 'bg-warning-dark',
       },
     },
     {
       variant: 'filled',
       status: 'success',
       class: {
-        root: 'bg-success-base',
+        // WCAG AA: white-on-success-base (green-500) is only 2.36:1; -dark (green-950) → 10.94:1
+        root: 'bg-success-dark',
       },
     },
     {
@@ -104,7 +112,8 @@ export const alertVariants = tv({
       variant: 'filled',
       status: 'feature',
       class: {
-        root: 'bg-faded-base',
+        // WCAG AA: white-on-faded-base (slate-500) is 4.49:1 (just under 4.5); -dark (slate-800) → 15.27:1
+        root: 'bg-faded-dark',
       },
     },
     //#endregion

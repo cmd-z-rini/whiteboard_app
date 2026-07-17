@@ -482,6 +482,8 @@ const NAKED_TYPES = new Set<CanvasComponentType>([
   // Guided problem statement renders its own white card + left accent, so it must
   // not be double-wrapped by StandardCardWrapper.
   "problem-statement-guided",
+  // Guided brief interrogation — same reason: own white card + left accent.
+  "brief-interrogation-guided",
   // Frame children are bare UI elements — a card header would defeat the point.
   "ui-nav-bar",
   "ui-card",
@@ -785,6 +787,7 @@ export function CanvasNodeRenderer(props: NodeProps) {
 
       // Session Mode (7-phase interview prep)
       case "brief-interrogation": return <BriefInterrogationNode node={node} onUpdate={onUpdate} />;
+      case "brief-interrogation-guided": return <BriefInterrogationGuidedNode node={node} onUpdate={onUpdate} />;
       case "working-assumption": return <WorkingAssumptionNode node={node} onUpdate={onUpdate} />;
       case "timeline-row": return <TimelineRowNode node={node} onUpdate={onUpdate} />;
       case "moment-of-truth": return <MomentOfTruthNode node={node} onUpdate={onUpdate} />;
@@ -965,6 +968,219 @@ function ProblemStatementGuidedNode({ node, onUpdate }: NodeProps) {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Brief Interrogation (guided) ────────────────────────────────
+// A coached, STEPPED sibling of the free-form BriefInterrogationNode. Same four
+// diagnostic fields (what's asked / not asked / constraints / success) and the
+// exact same data shape — but shown one at a time via a local `activeStep`
+// stepper, so the card isn't a wall of ~12 text chunks. The inactive fields
+// collapse to a tappable label+answer row; a 5th pseudo-step is the self-check
+// checklist. Each active step is tinted with the original node's category colors
+// through the shared catSurface()/catText() helpers. Rendered naked (own white
+// card + left accent) so StandardCardWrapper doesn't double-wrap it. The plain
+// `brief-interrogation` node is left untouched.
+//
+// Layout/step-state only — no answer-quality heuristics here; the on-blur nudge
+// is still queued as separate follow-up work.
+
+// Static per-step metadata. `cat` maps to the original BriefInterrogationNode's
+// category palette: asked=1 (green), NOT asked=4 (red), constraints=3 (amber),
+// success=2 (blue). Module-level so it stays pure data, easy to tune or test.
+const BRIEF_GUIDED_STEPS = [
+  { key: "what_is_asked", label: "What is asked", cat: 1, kind: "text",
+    why: "Restate the real job in your own words — the outcome, not the literal wording.",
+    example: 'e.g. "A planning tool for a repeated daily commute, not a one-off route search."',
+    placeholder: "The real ask…" },
+  { key: "what_is_NOT_asked", label: "What is NOT asked", cat: 4, kind: "text",
+    why: "Name what's tempting but out of scope, so you don't over-build.",
+    example: 'e.g. "A full maps replacement, or social sharing features."',
+    placeholder: "Out of scope…" },
+  { key: "constraints", label: "Constraints", cat: 3, kind: "list",
+    why: "List the hard boundaries — platform, timeline, tech — that shape any solution.",
+    example: 'e.g. "Mobile-first · works offline · ship in one quarter."',
+    placeholder: "Constraint…" },
+  { key: "success_looks_like", label: "Success looks like", cat: 2, kind: "text",
+    why: "Define the observable outcome that proves it worked — a number or a moment.",
+    example: 'e.g. "A commuter plans tomorrow\'s trip in under 30 seconds."',
+    placeholder: "Done when…" },
+];
+const BRIEF_CHECKLIST_STEP = BRIEF_GUIDED_STEPS.length; // 4 — the self-check pseudo-step
+
+function BriefInterrogationGuidedNode({ node, onUpdate }: NodeProps) {
+  const d = node.data;
+  const constraints: string[] = d.constraints || [];
+  const selfChecks: { id: string; label: string; done: boolean }[] = d.selfChecks || [];
+
+  // Is a step's field filled? Text = non-empty trimmed; list = ≥1 non-empty row.
+  const isAnswered = (i: number) => {
+    const s = BRIEF_GUIDED_STEPS[i];
+    if (s.kind === "list") return constraints.some((c) => c.trim() !== "");
+    return ((d[s.key] as string) || "").trim() !== "";
+  };
+
+  // Resume on mount at the first unanswered field; if all four are done, open the
+  // self-check screen — "where they left off". Local, per-instance, never persisted.
+  const [activeStep, setActiveStep] = useState(() => {
+    const firstEmpty = BRIEF_GUIDED_STEPS.findIndex((_, i) => !isAnswered(i));
+    return firstEmpty === -1 ? BRIEF_CHECKLIST_STEP : firstEmpty;
+  });
+  const goBack = () => setActiveStep((s) => Math.max(s - 1, 0));
+  const goNext = () => setActiveStep((s) => Math.min(s + 1, BRIEF_CHECKLIST_STEP));
+
+  const updateConstraint = (i: number, v: string) =>
+    onUpdate({ ...d, constraints: constraints.map((c, idx) => (idx === i ? v : c)) });
+  const addConstraint = () => onUpdate({ ...d, constraints: [...constraints, ""] });
+  const removeConstraint = (i: number) =>
+    onUpdate({ ...d, constraints: constraints.filter((_, idx) => idx !== i) });
+  const toggleCheck = (id: string) =>
+    onUpdate({ ...d, selfChecks: selfChecks.map((c) => (c.id === id ? { ...c, done: !c.done } : c)) });
+
+  const navBtn = "text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-default";
+
+  // Constraints list editor — unchanged add/remove logic, only shown when the
+  // constraints step is active.
+  const constraintsEditor = (
+    <div className="space-y-1">
+      {constraints.map((c, i) => (
+        <div key={i} className="group/c flex items-start gap-1.5">
+          <span className="mt-2 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--category-3-text)" }} />
+          <InlineEdit value={c} onChange={(v) => updateConstraint(i, v)} className="flex-1 text-sm text-foreground" placeholder="Constraint…" activateOn="dblclick" />
+          <button onClick={() => removeConstraint(i)} onMouseDown={(e) => e.stopPropagation()} className="shrink-0 opacity-0 group-hover/c:opacity-100 text-muted-foreground/40 hover:text-destructive transition-all p-0.5">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ))}
+      <button onClick={addConstraint} onMouseDown={(e) => e.stopPropagation()} className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+        <Plus className="w-3 h-3" /> Add
+      </button>
+    </div>
+  );
+
+  // The active step — full treatment (label + why + input + example), tinted with
+  // its category color, with Back/Next at the bottom.
+  const activeStepCard = (s: typeof BRIEF_GUIDED_STEPS[number], i: number) => (
+    <div key={s.key} className="rounded-xl border p-3" style={catSurface(s.cat)}>
+      <div className="text-[10px] font-semibold uppercase tracking-wider" style={catText(s.cat)}>{s.label}</div>
+      <p className="text-xs text-muted-foreground leading-snug mt-0.5 mb-1.5">{s.why}</p>
+      {s.kind === "list" ? constraintsEditor : (
+        <InlineEdit
+          value={(d[s.key] as string) || ""}
+          onChange={(v) => onUpdate({ ...d, [s.key]: v })}
+          className="text-sm text-foreground"
+          placeholder={s.placeholder}
+          activateOn="dblclick"
+          multiline
+        />
+      )}
+      <p className="mt-1.5 text-[11px] italic text-muted-foreground/70">{s.example}</p>
+      {/* Back / Next — layout only, never gated on answer quality. */}
+      <div className="flex items-center justify-between mt-3">
+        <button onClick={goBack} onMouseDown={(e) => e.stopPropagation()} disabled={i === 0} className={`${navBtn} border-border text-muted-foreground hover:text-foreground`}>Back</button>
+        <button onClick={goNext} onMouseDown={(e) => e.stopPropagation()} className={`${navBtn} border-primary bg-primary text-primary-foreground hover:bg-primary/90`}>
+          {i === BRIEF_GUIDED_STEPS.length - 1 ? "Review" : "Next"}
+        </button>
+      </div>
+    </div>
+  );
+
+  // A collapsed step — compact label + current answer, tappable to jump here.
+  // Empty answers show nothing but the label (per spec). Category-colored dot.
+  const collapsedRow = (s: typeof BRIEF_GUIDED_STEPS[number], i: number) => {
+    const answer = s.kind === "list" ? constraints.filter((c) => c.trim()).join(" · ") : ((d[s.key] as string) || "");
+    return (
+      <button key={s.key} onClick={() => setActiveStep(i)} onMouseDown={(e) => e.stopPropagation()} className="flex items-start gap-2 w-full text-left rounded-lg px-2 py-1.5 hover:bg-black/[0.03] transition-colors">
+        <span className="mt-1 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: `var(--category-${s.cat}-text)` }} />
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">{s.label}</div>
+          {answer.trim() && <p className="text-xs text-foreground/80 truncate">{answer}</p>}
+        </div>
+      </button>
+    );
+  };
+
+  return (
+    <div className="relative h-full flex flex-col overflow-hidden rounded-xl bg-white shadow-sm border border-border border-l-[3px] border-l-primary">
+      <div className="flex-1 p-4 overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-start gap-2.5">
+          <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <Search className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-foreground leading-tight">Brief Interrogation</h3>
+            <p className="mt-0.5 text-xs italic text-muted-foreground">
+              Pull the brief apart before you design — what's really being asked, and what isn't.
+            </p>
+          </div>
+        </div>
+
+        {/* The brief — always-visible given, outside the stepper. */}
+        <div className="rounded-xl border border-border bg-surface-muted p-3 mt-4">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">The brief</span>
+          <InlineEdit
+            value={d.prompt || ""}
+            onChange={(v) => onUpdate({ ...d, prompt: v })}
+            className="text-sm text-foreground mt-0.5"
+            placeholder="Paste the prompt you were given…"
+            activateOn="dblclick"
+            multiline
+          />
+        </div>
+
+        {/* Progress — one colored pill per field, active pill elongated; upcoming
+            pills are muted. Label reads "Step n of 4" or "Self-check". */}
+        <div className="flex items-center gap-1.5 mt-4">
+          {BRIEF_GUIDED_STEPS.map((s, i) => {
+            const lit = i === activeStep || isAnswered(i);
+            return (
+              <button
+                key={s.key}
+                onClick={() => setActiveStep(i)}
+                onMouseDown={(e) => e.stopPropagation()}
+                title={s.label}
+                className={`h-2 rounded-full transition-all ${i === activeStep ? "w-5" : "w-2"} ${lit ? "" : "bg-border"}`}
+                style={lit ? { background: `var(--category-${s.cat}-text)` } : undefined}
+              />
+            );
+          })}
+          <span className="ml-1.5 text-[11px] font-medium text-muted-foreground">
+            {activeStep < BRIEF_CHECKLIST_STEP ? `Step ${activeStep + 1} of ${BRIEF_GUIDED_STEPS.length}` : "Self-check"}
+          </span>
+        </div>
+
+        {/* Steps — exactly one field expanded (or the checklist), the rest collapsed. */}
+        <div className="mt-3 space-y-1.5">
+          {BRIEF_GUIDED_STEPS.map((s, i) => (i === activeStep ? activeStepCard(s, i) : collapsedRow(s, i)))}
+
+          {/* 5th pseudo-step: the self-check checklist. Back to step 4, no Next. */}
+          {activeStep === BRIEF_CHECKLIST_STEP && (
+            <div className="rounded-xl border border-border bg-surface-muted/60 p-3 mt-1.5">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1.5">Before you move on</div>
+              <div className="space-y-1.5">
+                {selfChecks.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => toggleCheck(c.id)}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="group/sc flex items-start gap-2 text-left w-full"
+                  >
+                    <span className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${c.done ? "bg-primary border-primary text-primary-foreground" : "border-border bg-surface group-hover/sc:border-primary/50"}`}>
+                      {c.done && <Check className="w-3 h-3" />}
+                    </span>
+                    <span className={`text-xs leading-snug ${c.done ? "text-muted-foreground line-through" : "text-foreground"}`}>{c.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3">
+                <button onClick={() => setActiveStep(BRIEF_CHECKLIST_STEP - 1)} onMouseDown={(e) => e.stopPropagation()} className={`${navBtn} border-border text-muted-foreground hover:text-foreground`}>Back</button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1639,6 +1855,17 @@ function BriefInterrogationNode({ node, onUpdate }: NodeProps) {
   const removeConstraint = (i: number) =>
     onUpdate({ ...d, constraints: constraints.filter((_, idx) => idx !== i) });
 
+  // Extra, user-added interrogation questions — mirrors Figma's open-ended Q4
+  // "add yours here" slot. Same add/remove/update trio shape as constraints, but
+  // these carry ids (like ClarifyingQuestions/TimelineRow) since each is a Q&A pair.
+  const customQuestions: { id: string; question: string; answer: string }[] = d.customQuestions || [];
+  const addCustomQuestion = () =>
+    onUpdate({ ...d, customQuestions: [...customQuestions, { id: `cq-${Date.now()}`, question: "", answer: "" }] });
+  const removeCustomQuestion = (id: string) =>
+    onUpdate({ ...d, customQuestions: customQuestions.filter((q) => q.id !== id) });
+  const updateCustomQuestion = (id: string, field: "question" | "answer", value: string) =>
+    onUpdate({ ...d, customQuestions: customQuestions.map((q) => (q.id === id ? { ...q, [field]: value } : q)) });
+
   return (
     <div className="flex flex-col h-full p-1">
       <div className="flex items-center gap-2 mb-3">
@@ -1682,6 +1909,29 @@ function BriefInterrogationNode({ node, onUpdate }: NodeProps) {
         <div className="rounded-lg border p-3" style={catSurface(2)}>
           <span className="text-xs font-semibold uppercase tracking-wide" style={catText(2)}>Success looks like</span>
           <InlineEdit value={d.success_looks_like} onChange={(v) => onUpdate({ ...d, success_looks_like: v })} className="text-sm text-foreground mt-1" multiline placeholder="Done when…" />
+        </div>
+      </div>
+
+      {/* Extra questions — additive section under the 2x2 grid. Same list/remove
+          affordances as constraints[]; each item is a compact neutral card with a
+          question line + answer line. */}
+      <div className="mt-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">More questions</span>
+        <div className="mt-1.5 space-y-2">
+          {customQuestions.map((q) => (
+            <div key={q.id} className="group/cq rounded-lg border border-border p-3">
+              <div className="flex items-start gap-1.5">
+                <InlineEdit value={q.question} onChange={(v) => updateCustomQuestion(q.id, "question", v)} className="flex-1 text-sm font-medium text-foreground" placeholder="Prompt-specific question — add yours here" />
+                <button onClick={() => removeCustomQuestion(q.id)} onMouseDown={(e) => e.stopPropagation()} className="shrink-0 opacity-0 group-hover/cq:opacity-100 text-muted-foreground/40 hover:text-destructive transition-all p-0.5">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <InlineEdit value={q.answer} onChange={(v) => updateCustomQuestion(q.id, "answer", v)} className="text-sm text-foreground mt-1" multiline placeholder="Your answer…" />
+            </div>
+          ))}
+          <button onClick={addCustomQuestion} className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+            <Plus className="w-3 h-3" /> Add question
+          </button>
         </div>
       </div>
     </div>

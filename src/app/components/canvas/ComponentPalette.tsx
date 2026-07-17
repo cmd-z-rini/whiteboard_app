@@ -236,6 +236,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   "shape": <Grid3X3 className="w-4 h-4" />,
   // Session Mode
   "brief-interrogation": <Search className="w-4 h-4" />,
+  "brief-interrogation-guided": <Search className="w-4 h-4" />,
   "working-assumption": <FlaskConical className="w-4 h-4" />,
   "timeline-row": <Clock className="w-4 h-4" />,
   "moment-of-truth": <Star className="w-4 h-4" />,
