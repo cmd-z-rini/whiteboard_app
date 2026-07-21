@@ -15,7 +15,7 @@ import {
   Play,
 } from "lucide-react";
 import type { ToolMode, CanvasViewport } from "./types";
-import { DomainSelector, type Domain } from "../DomainSelector";
+import { type Domain } from "../DomainSelector";
 import * as Button from "../ui/alignui/button";
 
 interface CanvasToolbarProps {
@@ -93,9 +93,7 @@ export function CanvasToolbar({
         {/* LEFT: Logo & Title */}
         <div className="flex items-center gap-4 min-w-fit">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-sm shadow-primary/20">
-              <span className="font-bold text-lg">P</span>
-            </div>
+            <img src="/logo.png" alt="PrepSlate logo" className="h-10 w-10 object-contain shrink-0" />
             <h1 className="font-extrabold text-lg text-foreground leading-none tracking-tight select-none">
               Prep<span className="text-primary">Slate</span>
             </h1>
@@ -128,12 +126,8 @@ export function CanvasToolbar({
           </div>
         </div>
 
-        {/* RIGHT: Export, Timer, Domain */}
+        {/* RIGHT: Export, Timer */}
         <div className="flex items-center gap-4 min-w-fit justify-end">
-          <DomainSelector selected={selectedDomain} onChange={onDomainChange} />
-
-          <div className="h-6 w-px bg-border/60" />
-
           {/* Zoom controls */}
           <div className="flex items-center gap-1">
             <Button.Root variant="neutral" mode="ghost" size="xxsmall" onClick={onZoomOut} title="Zoom out">

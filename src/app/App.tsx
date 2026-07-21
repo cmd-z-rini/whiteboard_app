@@ -36,37 +36,294 @@ const SESSION_HEADER_H = 104;
 const SESSION_NODE_GAP = 16;
 const SESSION_COMP_W = 520;
 
+// The scaffold doubles as a fully-worked EXAMPLE: one brief — "Design a sortable
+// list view for a professional networking site, to help baristas" — threaded
+// through all seven zones. Each component can carry an optional `data` override
+// that is merged over its createDefaultData() in buildSessionNodes(); omit it to
+// use the generic default (e.g. the blank wireframe-sketch nodes).
 const SESSION_ZONES: {
   header: { number: string; title: string; subtitle: string; color: string };
-  components: CanvasComponentType[];
+  components: { type: CanvasComponentType; data?: Record<string, any> }[];
 }[] = [
   {
     header: { number: "01", title: "Interrogate the brief", subtitle: "0–7 min", color: "bg-indigo-600" },
-    components: ["brief-interrogation", "working-assumption"],
+    components: [
+      {
+        type: "brief-interrogation",
+        data: {
+          prompt: "Design a sortable list view for a professional networking site, to help baristas.",
+          what_is_asked: "A list of shift/job opportunities a barista can re-order herself — sort by what matters right now (pay, distance, start time) so the right gig surfaces fast.",
+          what_is_NOT_asked: "A full job board, in-app chat, or scheduling system. Not search or filtering — specifically the sort interaction on an existing list.",
+          constraints: [
+            "Mobile-first — baristas browse one-handed between shifts",
+            "Usable on a low-end phone over patchy café Wi-Fi",
+            "Sort state must be obvious at a glance and reversible",
+          ],
+          success_looks_like: "A barista sorts by pay and finds a shift worth taking in under 15 seconds.",
+          customQuestions: [
+            {
+              id: "cq-ex-1",
+              question: "Which single sort key matters most when choosing a shift tonight?",
+              answer: "Pay per hour — with distance as the tiebreaker after a long day on her feet.",
+            },
+          ],
+          height: 620,
+        },
+      },
+      {
+        type: "working-assumption",
+        data: {
+          assumption: "Baristas abandon the opportunities list because its default order buries the shifts they'd actually take.",
+          because: "Most drop-off happens on the first screen — they skim 5–6 rows, see no good-fit shift near the top, and leave.",
+          validate_by: "Instrument scroll depth + tap-through on today's unsorted list vs. a prototype that defaults to 'Best match', before building full sort.",
+        },
+      },
+    ],
   },
   {
     header: { number: "02", title: "Diagnose the person", subtitle: "7–16 min", color: "bg-violet-600" },
-    components: ["persona-card", "timeline-row", "moment-of-truth"],
+    components: [
+      {
+        type: "persona-card",
+        data: {
+          name: "Maya Okafor",
+          role: "Barista · works across 2 cafés",
+          age: "Age 24",
+          avatar: "🧑‍🍳",
+          bio: "Part-time across two independent cafés, picking up extra shifts to cover rent. Always on her phone between the espresso machine and the till.",
+          goals: [
+            "Fill her week with well-paid shifts close to home",
+            "Build a reputation that earns first pick of gigs",
+          ],
+          painPoints: [
+            "The opportunities list is a random jumble — good shifts are buried",
+            "Can't tell at a glance which gig pays best or starts soonest",
+          ],
+          height: 380,
+        },
+      },
+      {
+        type: "timeline-row",
+        data: {
+          title: "Maya's opportunity hunt (today)",
+          stages: [
+            { id: "s1", label: "Discover", emotion: "neutral", note: "Push: '6 new shifts near you'." },
+            { id: "s2", label: "Open list", emotion: "negative", note: "40 rows in no order — scans the top few." },
+            { id: "s3", label: "Compare", emotion: "negative", note: "Opens shifts one by one to compare pay by hand." },
+            { id: "s4", label: "Decide", emotion: "negative", note: "Picks one unsure it was best — or gives up." },
+          ],
+          height: 280,
+        },
+      },
+      {
+        type: "moment-of-truth",
+        data: {
+          moment: "The first second the list loads — before any scroll or tap.",
+          why_critical: "If the top 3 rows aren't relevant, she assumes the whole list is junk and leaves. The default order IS the product.",
+          emotion: "frustration",
+          current_experience: "Newest-first: a random shift she can't work sits at the top.",
+          ideal_experience: "'Best match' first, with pay and distance readable in the row — no tap required.",
+          height: 380,
+        },
+      },
+    ],
   },
   {
     header: { number: "03", title: "Set strategy", subtitle: "16–24 min · Define the problem, then commit to a direction", color: "bg-blue-600" },
-    components: ["problem-statement-guided", "business-goals", "strategic-bet"],
+    components: [
+      {
+        type: "problem-statement-guided",
+        data: {
+          user: "A busy barista juggling shifts across cafés",
+          needs: "re-order the opportunities list by what matters to her right now — pay, distance, start time",
+          because: "the default order buries good-fit shifts, so she can't compare them and leaves without applying",
+          showTips: false,
+          height: 480,
+        },
+      },
+      {
+        type: "business-goals",
+        data: {
+          business: "Lift shift-applications started from the list by 25%",
+          user: "Find a shift worth taking in seconds, not minutes",
+          tech: "Client-side sort on the already-loaded page — no new endpoints for v1",
+          height: 320,
+        },
+      },
+      {
+        type: "strategic-bet",
+        data: {
+          we_believe: "letting baristas sort the list by pay, distance, and start time",
+          for_user: "baristas picking up extra shifts on the go",
+          will_achieve: "a 25% lift in applications started from the list",
+          because: "in interviews, every barista re-ranked shifts by pay or distance the moment we handed them paper cards",
+          riskiest_assumption: "A simple sort is enough — they don't need multi-factor filtering to decide.",
+          height: 380,
+        },
+      },
+    ],
   },
   {
     header: { number: "04", title: "Map JTBD", subtitle: "24–30 min", color: "bg-cyan-600" },
-    components: ["jtbd-table", "jtbd-table"],
+    components: [
+      {
+        type: "jtbd-table",
+        data: {
+          title: "Jobs to Be Done — picking a shift",
+          jobs: [
+            {
+              id: "j1",
+              situation: "When I've a free evening and rent's due...",
+              functional: "I want to find the best-paying shift near me fast",
+              emotional: "so I feel in control of my week, not scrambling",
+              social: "and look reliable to managers I want to work with",
+              outcome: "Book a shift I'm glad I took",
+            },
+            {
+              id: "j2",
+              situation: "When two cafés post shifts at the same time...",
+              functional: "I want to compare them by pay and distance side by side",
+              emotional: "so I don't second-guess the choice later",
+              social: "",
+              outcome: "Pick the higher-value shift with confidence",
+            },
+          ],
+          height: 380,
+        },
+      },
+      {
+        type: "jtbd-table",
+        data: {
+          title: "Jobs to Be Done — building a reputation",
+          jobs: [
+            {
+              id: "j1",
+              situation: "When I've reliably worked a café's shifts...",
+              functional: "I want their best gigs to surface for me first",
+              emotional: "so I feel my track record actually pays off",
+              social: "and get first pick before other baristas",
+              outcome: "Get offered the best shifts early",
+            },
+            { id: "j2", situation: "", functional: "", emotional: "", social: "", outcome: "" },
+          ],
+          height: 380,
+        },
+      },
+    ],
   },
   {
     header: { number: "05", title: "Design the screens", subtitle: "30–50 min", color: "bg-teal-600" },
-    components: ["wireframe-sketch", "wireframe-sketch", "trigger-action-outcome", "thirty-day-arc", "entry-convergence"],
+    components: [
+      { type: "wireframe-sketch" },
+      { type: "wireframe-sketch" },
+      {
+        type: "trigger-action-outcome",
+        data: {
+          trigger: "Push: '6 new shifts near you tonight.'",
+          action: "Maya opens the list, taps 'Sort by pay', scans the top 3.",
+          outcome: "Applies to a £13/hr shift 10 minutes away.",
+          loop_back: true,
+          loop_text: "She rates the café after the shift, which sharpens her 'Best match' order next time.",
+          height: 280,
+        },
+      },
+      {
+        type: "thirty-day-arc",
+        data: {
+          title: "Maya's first 30 days",
+          milestones: [
+            { id: "d1", day_label: "Day 1", headline: "Sorts her first list", action: "List defaults to 'Best match'; sort chips one tap away", feel: "Oriented" },
+            { id: "w1", day_label: "Week 1", headline: "Trusts the top of the list", action: "Good-fit shifts consistently surface first", feel: "In control" },
+            { id: "w24", day_label: "Week 2–4", headline: "Books without hunting", action: "Remembered sort + post-shift ratings", feel: "Efficient" },
+            { id: "d30", day_label: "Day 30", headline: "Relies on it for her week", action: "Weekly 'shifts near you' recap", feel: "Loyal" },
+          ],
+          height: 400,
+        },
+      },
+      {
+        type: "entry-convergence",
+        data: {
+          core_action: "Sort the opportunities list",
+          entry_points: [
+            { id: "e1", channel: "Sort chips", description: "Pay / Distance / Start-time chips above the list." },
+            { id: "e2", channel: "Row tap", description: "Tap a row's pay value to sort by pay." },
+            { id: "e3", channel: "Push deep-link", description: "'Shifts near you' opens the list pre-sorted by distance." },
+            { id: "e4", channel: "Empty state", description: "'No saved order? Try Best match' prompt." },
+          ],
+          convergence_note: "Every path lands on the same re-ordered list, with the active sort shown in one clear chip.",
+          height: 440,
+        },
+      },
+    ],
   },
   {
     header: { number: "06", title: "Name edge cases", subtitle: "50–55 min · Name what you haven't solved", color: "bg-orange-500" },
-    components: ["edge-case", "edge-case", "unsolved-problem"],
+    components: [
+      {
+        type: "edge-case",
+        data: {
+          scenario: "The list has fewer than ~4 shifts, or none at all.",
+          impact: "Sort controls look broken or pointless on a near-empty list.",
+          mitigation: "Hide the sort chips under a threshold; show an encouraging empty state instead.",
+          severity: "medium",
+          height: 280,
+        },
+      },
+      {
+        type: "edge-case",
+        data: {
+          scenario: "Two shifts tie on the sort key (identical pay).",
+          impact: "Order looks arbitrary — she can't tell why one sits above the other.",
+          mitigation: "Define a stable tiebreak (distance, then start time) and label the reason.",
+          severity: "low",
+          height: 280,
+        },
+      },
+      {
+        type: "unsolved-problem",
+        data: {
+          problem: "Multi-factor trade-offs — 'higher pay but 40 min away' vs. 'less pay next door'.",
+          why_unsolved: "A single sort key can't express 'worth it'. Weighted filtering is a bigger feature than this brief.",
+          future_approach: "Explore a 'Best match' score that blends pay, distance, and start time — and let her tune the weights.",
+          height: 260,
+        },
+      },
+    ],
   },
   {
     header: { number: "07", title: "Synthesise + close", subtitle: "55–60 min", color: "bg-rose-600" },
-    components: ["summary-card", "success-metrics", "pushback-answer"],
+    components: [
+      {
+        type: "summary-card",
+        data: {
+          label: "Summary",
+          text: "Baristas leave the opportunities list because its default order buries the shifts they'd take. We give them a one-tap sort — pay, distance, start time — with a smart 'Best match' default, client-side and mobile-first, so the right shift surfaces in seconds. Bet: a 25% lift in applications started.",
+          height: 280,
+        },
+      },
+      {
+        type: "success-metrics",
+        data: {
+          metrics: [
+            { id: "m1", label: "Applications started / list view", value: "12%", target: "15%" },
+            { id: "m2", label: "Time to first application", value: "2m 10s", target: "under 30s" },
+            { id: "m3", label: "Return to list within 7 days", value: "31%", target: "45%" },
+          ],
+          height: 300,
+        },
+      },
+      {
+        type: "pushback-answer",
+        data: {
+          pushbacks: [
+            { id: "p1", objection: "Why sort, not search/filter?", answer: "Baristas decide on 2–3 factors they can rank, not a query. Sort is the lighter, faster interaction for a short list.", confidence: "high" },
+            { id: "p2", objection: "Client-side sort won't scale past a few hundred rows.", answer: "The list is already paginated to her area; server-side sort is a fast-follow once volume justifies it.", confidence: "medium" },
+            { id: "p3", objection: "'Best match' is a black box she won't trust.", answer: "We surface the one reason a row ranks high (e.g. 'Top pay nearby'), so the order stays legible.", confidence: "medium" },
+          ],
+          height: 400,
+        },
+      },
+    ],
   },
 ];
 
@@ -116,15 +373,15 @@ function buildSessionNodes(): CanvasNode[] {
       },
     });
     let y = SESSION_START_Y + SESSION_HEADER_H + SESSION_NODE_GAP;
-    zone.components.forEach((type, ci) => {
-      // Let each component carry its own default height (from createDefaultData)
-      // so it renders the same as a palette-dragged node. Stack the next node by
-      // that actual height, falling back to a comfortable minimum.
-      const data = createDefaultData(type);
+    zone.components.forEach((comp, ci) => {
+      // Start from the type's createDefaultData (same as a palette-dragged node),
+      // then merge the zone's worked-example override on top. Height comes through
+      // that merge, so the next node stacks by the actual rendered height.
+      const data = { ...createDefaultData(comp.type), ...(comp.data || {}) };
       const h = typeof data.height === "number" ? data.height : 240;
       out.push({
         id: `session-Z${zi + 1}-${ci}-${ts}`,
-        type,
+        type: comp.type,
         x,
         y,
         width: SESSION_COMP_W,
